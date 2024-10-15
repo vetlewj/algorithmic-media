@@ -1,7 +1,8 @@
 import os
 import pandas as pd
-import spacy
 import constants
+from nlp_loader import nlp
+
 
 def filter_text(text: str):
     """
@@ -24,6 +25,8 @@ def calculate_jargon_metric(text: str):
     category_path = constants.PMI_SCORES
     words = filter_text(text)
     total_words = len(words)
+    if total_words == 0:
+        return {"NONE": 0}
     jargon_proportions = {}
     for filename in os.listdir(category_path):
         file_path = os.path.join(category_path, filename)
@@ -46,7 +49,6 @@ def get_top_n_jargon_categories(jargon_proportions, n=5):
 
 
 if __name__ == "__main__":
-    nlp = spacy.load("en_core_web_lg")
     text = "Scholarly text is often laden with jargon, or specialized language that can facilitate efficient in-group communication within fields but hinder understanding for out-groups. In this work, we develop and validate an interpretable approach for measuring scholarly jargon from text. Expanding the scope of prior work which focuses on word types, we use word sense induction to also identify words that are widespread but overloaded with different meanings across fields. We then estimate the prevalence of these discipline-specific words and senses across hundreds of subfields, and show that word senses provide a complementary, yet unique view of jargon alongside word types. We demonstrate the utility of our metrics for science of science and computational sociolinguistics by highlighting two key social implications. First, though most fields reduce their use of jargon when writing for general-purpose venues, and some fields (e.g., biological sciences) do so less than others. Second, the direction of correlation between jargon and citation rates varies among fields, but jargon is nearly always negatively correlated with interdisciplinary impact. Broadly, our findings suggest that though multidisciplinary venues intend to cater to more general audiences, some fields' writing norms may act as barriers rather than bridges, and thus impede the dispersion of scholarly ideas."
     jargon_proportion = calculate_jargon_metric(text)
     top_10_jargon_categories = get_top_n_jargon_categories(jargon_proportion)
