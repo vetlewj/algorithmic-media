@@ -26,8 +26,8 @@ def calculate_fc_using_gpt(original_text, summary_text, fail_silent=True) -> int
 
     try:
         prompt = (
-            f"""Score the following {taskins} with respect to {aspect} on a continuous scale from 0 to 100, 
-where a score of zero means “{antaspect}” and score of one hundred means “perfect {aspect}”. 
+            f"""Score the following {taskins} with respect to {aspect} on a discrete scale from 1 to 5, 
+where a score of 1 means “{antaspect}” and score of one 5 means “perfect {aspect}”. 
 Note that  {aspect} measures {aspectins}. 
 Research Abstract: {original_text}
 Reddit Summary: {summary_text}  
@@ -61,7 +61,9 @@ Respond in the following format: """
 
 # Example usage
 if __name__ == "__main__":
-    df = pd.read_csv("./data/mocked_fc_data.csv")
+    df = pd.read_csv(
+        "../data/mocked_fc_data.csv"
+    )  # mock dataset for demonstration purposes
     for index, row in df.iterrows():
         original_text = row["research_abstract"]
         summary_text = row["reddit_post"]
