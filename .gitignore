@@ -2,8 +2,8 @@
 .DS_Store
 __pycache__/
 
-data/
-pmi_scores/
+jargon_metric/data/
+jargon_metric/data/pmi_scores/
 
 # notebook checkpionts
 *.ipynb_checkpoints/
