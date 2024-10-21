@@ -13,7 +13,7 @@ def filter_text(text: str):
     return words
 
 
-def calculate_jargon_metric(text: str):
+def calculate_jargon_metric(text: str, related_categories: [str] = None, threshold: float = 0.1):
     """
     Calculate the proportion of jargon words in a given text.
 
@@ -28,13 +28,21 @@ def calculate_jargon_metric(text: str):
     if total_words == 0:
         return {"NONE": 0}
     jargon_proportions = {}
-    for filename in os.listdir(category_path):
-        file_path = os.path.join(category_path, filename)
+
+    all_categories = os.listdir(os.path.join(category_path, str(threshold)))
+
+    # Get all the categories that are in the reddit_category list and in the PMI_SCORES folder
+    if related_categories:
+        categories = list(set(all_categories).intersection(set(related_categories)))
+
+    for category in categories:
+        # File path is category path / threshold / category
+        file_path = os.path.join(os.path.join(category_path, str(threshold)), category)
         data = pd.read_csv(file_path)
 
         jargon_words = len(set(words).intersection(set(data['word'].values)))
         # TODO: Should there be any weighting of the jargon words or just use threshold?
-        jargon_proportions[filename] = jargon_words / total_words
+        jargon_proportions[category] = jargon_words / total_words
 
     return jargon_proportions
 

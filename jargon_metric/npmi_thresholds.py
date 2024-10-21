@@ -15,8 +15,7 @@ def create_new_dataset(input_folder, output_folder, threshold):
             print(f"KeyError: 'pmi' column not found in {file_path}")
             unprocessed_files.append(filename)
             continue
-        output_filename = f"{filename}_{str(threshold)}"
-        output_path = os.path.join(output_folder, output_filename)
+        output_path = os.path.join(os.path.join(output_folder, str(threshold)), filename)
         filtered_data.to_csv(output_path, index=False)
 
         print(f"Filtered data saved to {output_path}")
