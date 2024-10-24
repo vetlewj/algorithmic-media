@@ -7,3 +7,6 @@ jargon_metric/data/pmi_scores/
 
 # notebook checkpionts
 *.ipynb_checkpoints/
+
+*/*.csv
+*/*.jsonl
