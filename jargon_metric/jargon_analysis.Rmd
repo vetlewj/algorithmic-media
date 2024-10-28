@@ -1,0 +1,107 @@
+---
+output:
+pdf_document: default
+html_document: default
+---
+```{r, include=FALSE}
+library(data.table)
+library(ggplot2)
+library(here)
+library(dplyr)
+library(progress)
+library(stargazer)
+```
+
+```{r}
+data <- fread(here("data", "summed_for_regression.csv"))
+data[link_flair_text == "Computer Sci", link_flair_text := "Computer Science"]
+print(head(data))
+print(str(data))
+# count entries per category
+print(data[, .N, by = link_flair_text])
+```
+
+```{r}
+model_jargon_only = lm(score ~ jargon_proportion, data = data)
+model_year = lm(score ~ jargon_proportion + factor(year) + factor(month), data = data)
+stargazer(model_jargon_only, model_year,
+          type = "text",
+          omit = "factor",
+          column.labels = c("Jargon only", "Jargon, Year and Month")
+)
+```
+
+-\> We can explain a bit more, when including factors for year months etc. Let's have a look whether that is significantly different:
+
+```{r}
+anova(model_jargon_only, model_year)
+```
+
+-\> Seems to be significantly better!
+
+Let's look how the months influence our score? -\> Seems like posts from December are the best ;)
+
+```{r}
+stargazer::stargazer(model_jargon_only, model_year,
+                     type = "text",
+                     omit = "year"
+)
+```
+
+Let's see how the year interacts with the jargon on the score:
+
+```{r}
+data$year_factor = factor(data$year)
+# Interaction terms in years and jargon
+model_interaction_jargon_year = lm(score ~ jargon_proportion:year_factor +
+  year_factor +
+  factor(month) - 1, data = data)
+sanity_check = lm(score ~ jargon_proportion:year_factor +
+  factor(year) +
+  factor(month), data = data)
+# THose should all be the same only moved by the intercept
+stargazer::stargazer(model_interaction_jargon_year, sanity_check,
+                     type = "text",
+                     omit = c("month", "jargon")
+)
+
+```
+
+Okay seems like that works. Let's look at the interaction terms. I interpret this as how effective the jargon is in the different years.
+
+```{r}
+stargazer(model_interaction_jargon_year,
+          type = "text",
+          omit = 1:18
+)
+```
+
+```{r}
+anova(model_interaction_jargon_year, model_year)
+```
+
+-\> Also adding those interaction terms has a positive effect and better explains the variance.
+
+::: callout:::
+When including interaction between jargon and years, we can improve model fit.
+:::
+
+According to the anova test, this seems significant.
+
+We could do something similar for the month, but I am not sure if it is worth it. Let's do it for the **categories**.
+
+```{r}
+# add a count to unique values
+data$fac_category = factor(data$link_flair_text)
+unique(data$fac_category)
+# I'm not sure whether I can do it in the following way, but it would be easier to interpret:
+# It gives basically the same results but shifted. For some reason the F values are different though.
+model_interaction_jargon_category = lm(score ~ jargon_proportion * fac_category -
+  jargon_proportion -
+  1 +
+  factor(year) +
+  factor(month), data = data)
+stargazer(model_interaction_jargon_category,
+          type = "text",
+          omit = "factor")
+```
