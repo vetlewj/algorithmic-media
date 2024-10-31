@@ -1,10 +1,11 @@
-pandas
+pandas==2.1.4
 spacy
 matplotlib
 scipy
 openai
 seaborn
-transformers
-torch
-ipdb
+numpy==1.26.4
 tqdm
+torch
+transformers==4.44.2
+datasets
