@@ -4,3 +4,7 @@ matplotlib
 scipy
 openai
 seaborn
+transformers
+torch
+ipdb
+tqdm
