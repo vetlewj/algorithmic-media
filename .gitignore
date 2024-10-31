@@ -12,3 +12,7 @@ jargon_metric/data/pmi_scores/
 */*.jsonl
 .Rproj.user
 /.Rhistory
+/sensationalism/models/causality/
+/sensationalism/models/sensationalism/
+/sensationalism/models/generalization/
+/sensationalism/models/certainty/

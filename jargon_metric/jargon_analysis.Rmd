@@ -3,6 +3,7 @@ output:
 pdf_document: default
 html_document: default
 ---
+
 ```{r, include=FALSE}
 library(data.table)
 library(ggplot2)
@@ -10,6 +11,9 @@ library(here)
 library(dplyr)
 library(progress)
 library(stargazer)
+library(stringr)
+
+library(broom)
 ```
 
 ```{r}
@@ -22,12 +26,33 @@ print(data[, .N, by = link_flair_text])
 ```
 
 ```{r}
+data[, top_category := fifelse(link_flair_text %in% c("Biology", "Medicine", "Health", "Neuroscience",
+                                                      "Cancer", "Epidemiology", "Genetics", "Animal Science"), "Life Sciences",
+                               fifelse(link_flair_text %in% c("Chemistry", "Physics", "Earth Science", "Geology",
+                                                              "Astronomy", "Nanoscience"), "Physical Sciences",
+                                       fifelse(link_flair_text %in% c("Psychology", "Social Science", "Anthropology", "Economics"), "Social Sciences",
+                                               fifelse(link_flair_text %in% c("Computer Science", "Engineering", "Materials Science", "Mathematics"), "Engineering & Technology",
+                                                       fifelse(link_flair_text %in% c("Environment", "Paleontology"), "Environmental Sciences",
+                                                               "Other")))))]
+
+
+```
+
+```{r}
+stargazer(lm(score ~ jargon_proportion + factor(year), data = data), type = "text")
+```
+
+```{r}
 model_jargon_only = lm(score ~ jargon_proportion, data = data)
 model_year = lm(score ~ jargon_proportion + factor(year) + factor(month), data = data)
-stargazer(model_jargon_only, model_year,
+model_year_cate = lm(score ~ jargon_proportion +
+  factor(year) +
+  factor(month) +
+  factor(top_category), data = data)
+stargazer(model_jargon_only, model_year, model_year_cate,
           type = "text",
           omit = "factor",
-          column.labels = c("Jargon only", "Jargon, Year and Month")
+          column.labels = c("Jargon only", "Jargon, Year and Month", "Jargon, Year, Month, Category")
 )
 ```
 
@@ -59,7 +84,7 @@ model_interaction_jargon_year = lm(score ~ jargon_proportion:year_factor +
 sanity_check = lm(score ~ jargon_proportion:year_factor +
   factor(year) +
   factor(month), data = data)
-# THose should all be the same only moved by the intercept
+# Those should all be the same only moved by the intercept
 stargazer::stargazer(model_interaction_jargon_year, sanity_check,
                      type = "text",
                      omit = c("month", "jargon")
@@ -80,28 +105,120 @@ stargazer(model_interaction_jargon_year,
 anova(model_interaction_jargon_year, model_year)
 ```
 
--\> Also adding those interaction terms has a positive effect and better explains the variance.
+-\> Adding those interactions doesn't really make a difference, we should ignore it.
 
-::: callout:::
-When including interaction between jargon and years, we can improve model fit.
-:::
-
-According to the anova test, this seems significant.
+According to the anova test, this does not seem significant.
 
 We could do something similar for the month, but I am not sure if it is worth it. Let's do it for the **categories**.
 
 ```{r}
 # add a count to unique values
 data$fac_category = factor(data$link_flair_text)
-unique(data$fac_category)
 # I'm not sure whether I can do it in the following way, but it would be easier to interpret:
-# It gives basically the same results but shifted. For some reason the F values are different though.
-model_interaction_jargon_category = lm(score ~ jargon_proportion * fac_category -
-  jargon_proportion -
-  1 +
-  factor(year) +
-  factor(month), data = data)
-stargazer(model_interaction_jargon_category,
-          type = "text",
-          omit = "factor")
+model_interaction_jargon_category = lm(score ~
+                                         jargon_proportion:factor(link_flair_text)
+                                           - 1
+                                           +
+                                           factor(year)
+                                           +
+                                           factor(month)
+                                           +
+                                           factor(link_flair_text),
+                                       data = data
+)
+model_categories_no_interaction = lm(score ~
+                                       jargon_proportion
+                                         +
+                                         factor(year)
+                                         +
+                                         factor(month)
+                                         +
+                                         factor(link_flair_text),
+                                     data = data
+)
 ```
+
+-\> Let's first look if inlcuding the interactions significantly improves the model:
+
+```{r}
+anova(model_interaction_jargon_category, model_categories_no_interaction)
+
+```
+
+Yes it does -\> We can show that it is significant to
+
+```{r}
+stargazer(model_interaction_jargon_category, model_categories_no_interaction,
+          type = "text")
+```
+
+```{r}
+
+# add a count to unique values
+data$fac_category = factor(data$link_flair_text)
+# I'm not sure whether I can do it in the following way, but it would be easier to interpret:
+model_interaction_jargon_top_category = lm(score ~
+                                             jargon_proportion:factor(top_category)
+                                               #- 1
+                                               +
+                                               factor(year)
+                                               +
+                                               factor(month)
+                                               +
+                                               factor(top_category),
+                                           data = data
+)
+model_top_categories_no_interaction = lm(score ~
+                                           jargon_proportion
+                                             +
+                                             factor(year)
+                                             +
+                                             factor(month)
+                                             +
+                                             factor(top_category),
+                                         data = data
+)
+anova(model_interaction_jargon_top_category, model_top_categories_no_interaction)
+stargazer(model_interaction_jargon_top_category,
+          type = "text"
+          #keep = 22:26,
+          #covariate.labels = c("Jargon x Engineering and Tech", "Jargon x Environmental Sciences", "Jargon x Life Sciences", "Jargon x Physical Sciences", "Jargon x Social Sciences")
+)
+```
+
+```{r}
+model_jargon_in_categories = lm(jargon_proportion ~ factor(link_flair_text), data = data)
+stargazer(model_jargon_in_categories, type = "text")
+```
+
+```{r}
+# plot the jargon proportion in the categories
+ggplot(data, aes(x = top_category, y = jargon_proportion)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Jargon proportion in different categories",
+       x = "Category",
+       y = "Jargon proportion")
+```
+
+```{r}
+model_interaction_jargon_top_category$coefficients
+# get only the coefficients that contain jargon_proposrtion
+
+model_interaction_jargon_top_category$coefficients[grep("jargon_proportion", names(model_interaction_jargon_top_category$coefficients))]
+# plot those 
+```
+
+
+```{r}
+coefficients_df <- broom::tidy(model_interaction_jargon_top_category)
+coefficients_df <- coefficients_df[str_detect(coefficients_df$term, "^jargon"),]
+ggplot(coefficients_df, aes(x = term, y = estimate)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  geom_errorbar(aes(ymin = estimate - std.error, ymax = estimate + std.error), width = 0.2) +
+  labs(x = "Coefficient", y = "Estimate", title = "Coefficient Estimates with Standard Errors") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_x_discrete(labels = c("Jargon x Engineering and Tech", "Jargon x Environmental Sciences", "Jargon x Life Sciences", "Jargon x Physical Sciences", "Jargon x Social Sciences"))
+```
+
