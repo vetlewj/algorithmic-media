@@ -17,12 +17,12 @@ library(broom)
 ```
 
 ```{r}
-data <- fread(here("data", "summed_for_regression.csv"))
-data[link_flair_text == "Computer Sci", link_flair_text := "Computer Science"]
+data <- fread(here("data", "combined_for_analysis_sensationalism_jargon_categories_domain_labels.csv"))
+#data[link_flair_text == "Computer Sci", link_flair_text := "Computer Science"]
 print(head(data))
 print(str(data))
-# count entries per category
-print(data[, .N, by = link_flair_text])
+# count entries per category filtered by only the categories with a hundred entries or more
+data_filtered = data[, .N, by = link_flair_text][N > 100]
 ```
 
 ```{r}
@@ -31,7 +31,7 @@ data[, top_category := fifelse(link_flair_text %in% c("Biology", "Medicine", "He
                                fifelse(link_flair_text %in% c("Chemistry", "Physics", "Earth Science", "Geology",
                                                               "Astronomy", "Nanoscience"), "Physical Sciences",
                                        fifelse(link_flair_text %in% c("Psychology", "Social Science", "Anthropology", "Economics"), "Social Sciences",
-                                               fifelse(link_flair_text %in% c("Computer Science", "Engineering", "Materials Science", "Mathematics"), "Engineering & Technology",
+                                               fifelse(link_flair_text %in% c("Computer Science", "Engineering", "Materials Science", "Mathematics"), "Engineering and Technology",
                                                        fifelse(link_flair_text %in% c("Environment", "Paleontology"), "Environmental Sciences",
                                                                "Other")))))]
 
@@ -85,9 +85,9 @@ sanity_check = lm(score ~ jargon_proportion:year_factor +
   factor(year) +
   factor(month), data = data)
 # Those should all be the same only moved by the intercept
-stargazer::stargazer(model_interaction_jargon_year, sanity_check,
-                     type = "text",
-                     omit = c("month", "jargon")
+stargazer(model_interaction_jargon_year, sanity_check,
+          type = "text",
+          omit = c("month", "jargon")
 )
 
 ```
@@ -159,7 +159,7 @@ data$fac_category = factor(data$link_flair_text)
 # I'm not sure whether I can do it in the following way, but it would be easier to interpret:
 model_interaction_jargon_top_category = lm(score ~
                                              jargon_proportion:factor(top_category)
-                                               #- 1
+                                               - 1
                                                +
                                                factor(year)
                                                +
@@ -185,7 +185,12 @@ stargazer(model_interaction_jargon_top_category,
           #covariate.labels = c("Jargon x Engineering and Tech", "Jargon x Environmental Sciences", "Jargon x Life Sciences", "Jargon x Physical Sciences", "Jargon x Social Sciences")
 )
 ```
+Let's see if the top categories are worse than the detailed categories
+```{r}
+stargazer(model_interaction_jargon_top_category, model_interaction_jargon_category, type = "text")
 
+```
+-> Go with top_category only, as it is more interpretable and readable and adjusted r2 is similar
 ```{r}
 model_jargon_in_categories = lm(jargon_proportion ~ factor(link_flair_text), data = data)
 stargazer(model_jargon_in_categories, type = "text")
@@ -221,4 +226,39 @@ ggplot(coefficients_df, aes(x = term, y = estimate)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   scale_x_discrete(labels = c("Jargon x Engineering and Tech", "Jargon x Environmental Sciences", "Jargon x Life Sciences", "Jargon x Physical Sciences", "Jargon x Social Sciences"))
 ```
+
+## Trying to make it more interpretable
+```{r}
+data[, jargon_percentage_times_100 := (jargon_proportion + 0.00001) * 100]
+model_log = lm(log(score + 0.01) ~ jargon_proportion:factor(top_category) +
+  factor(year) +
+  factor(month) +
+  factor(top_category), data = data)
+model_log_100_times = lm(log(score + 0.01) ~ jargon_percentage_times_100:factor(top_category) +
+  factor(year) +
+  factor(month) +
+  factor(top_category), data = data)
+model_log_log = lm(log(score + 0.01) ~ log(jargon_proportion + 0.00001):factor(top_category) +
+  factor(year) +
+  factor(month) +
+  factor(top_category), data = data)
+model_log_log_100_times = lm(log(score + 0.01) ~ log(jargon_percentage_times_100):factor(top_category) +
+  factor(year) +
+  factor(month) +
+  factor(top_category), data = data)
+
+stargazer(model_log, model_log_100_times, model_log_log, model_log_log_100_times, type = "text", omit = 1:17) # Why is this no differen?
+```
+```{r}
+# summarizing this and making it nice
+model_interaction_jargon_top_category_new = lm(score ~ jargon_proportion:factor(top_category) +
+  factor(year) +
+  factor(month) +
+  factor(top_category), data = data)
+stargazer(model_interaction_jargon_top_category_new, type = "text", omit = 1:17)
+stargazer(model_log_100_times, model_log_log, type = "text", omit = 1:17)
+stargazer(model_interaction_jargon_top_category_new, model_log_100_times, model_log_log, type = "text", omit = 1:17)
+
+```
+
 
