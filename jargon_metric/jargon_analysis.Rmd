@@ -12,47 +12,29 @@ library(dplyr)
 library(progress)
 library(stargazer)
 library(stringr)
-
 library(broom)
 ```
 
 ```{r}
 data <- fread(here("data", "combined_for_analysis_sensationalism_jargon_categories_domain_labels.csv"))
-#data[link_flair_text == "Computer Sci", link_flair_text := "Computer Science"]
-print(head(data))
-print(str(data))
-# count entries per category filtered by only the categories with a hundred entries or more
-data_filtered = data[, .N, by = link_flair_text][N > 100]
-```
-
-```{r}
-data[, top_category := fifelse(link_flair_text %in% c("Biology", "Medicine", "Health", "Neuroscience",
-                                                      "Cancer", "Epidemiology", "Genetics", "Animal Science"), "Life Sciences",
-                               fifelse(link_flair_text %in% c("Chemistry", "Physics", "Earth Science", "Geology",
-                                                              "Astronomy", "Nanoscience"), "Physical Sciences",
-                                       fifelse(link_flair_text %in% c("Psychology", "Social Science", "Anthropology", "Economics"), "Social Sciences",
-                                               fifelse(link_flair_text %in% c("Computer Science", "Engineering", "Materials Science", "Mathematics"), "Engineering and Technology",
-                                                       fifelse(link_flair_text %in% c("Environment", "Paleontology"), "Environmental Sciences",
-                                                               "Other")))))]
-
-
-```
-
-```{r}
-stargazer(lm(score ~ jargon_proportion + factor(year), data = data), type = "text")
+# rename Engineering & Tech to Engineering and Tech
+data[, top_category := gsub("Engineering & Tech", "Engineering and Tech", top_category)]
+colnames(data)
 ```
 
 ```{r}
 model_jargon_only = lm(score ~ jargon_proportion, data = data)
-model_year = lm(score ~ jargon_proportion + factor(year) + factor(month), data = data)
-model_year_cate = lm(score ~ jargon_proportion +
+model_year = lm(score ~ jargon_proportion + factor(year), data = data)
+model_year_month = lm(score ~ jargon_proportion + factor(year) + factor(month), data = data)
+model_year_month_top_cat = lm(score ~ jargon_proportion +
   factor(year) +
   factor(month) +
   factor(top_category), data = data)
-stargazer(model_jargon_only, model_year, model_year_cate,
+stargazer(model_jargon_only, model_year, model_year_month, model_year_month_top_cat,
           type = "text",
           omit = "factor",
-          column.labels = c("Jargon only", "Jargon, Year and Month", "Jargon, Year, Month, Category")
+          column.labels = c("Jargon only", "Jargon, Year",
+                            "Jargon, Year and Month", "Jargon, Year, Month, Category")
 )
 ```
 
@@ -60,106 +42,48 @@ stargazer(model_jargon_only, model_year, model_year_cate,
 
 ```{r}
 anova(model_jargon_only, model_year)
+anova(model_year, model_year_month)
+anova(model_year_month, model_year_month_top_cat)
 ```
 
--\> Seems to be significantly better!
+*-\> Seems like every single step: Adding year, month and top_category adds power to the model. :::*
 
-Let's look how the months influence our score? -\> Seems like posts from December are the best ;)
+Let's look how the months influence our score?
 
 ```{r}
-stargazer::stargazer(model_jargon_only, model_year,
+stargazer(model_year, model_year_month,
                      type = "text",
                      omit = "year"
 )
 ```
 
-Let's see how the year interacts with the jargon on the score:
+-\> For plotting this look at python analysis file ::: I feel like posts from December are just the best adding about an extra 250 points to the score. ::: Let's see how the year interacts with the jargon on the score:
 
 ```{r}
-data$year_factor = factor(data$year)
 # Interaction terms in years and jargon
-model_interaction_jargon_year = lm(score ~ jargon_proportion:year_factor +
-  year_factor +
-  factor(month) - 1, data = data)
-sanity_check = lm(score ~ jargon_proportion:year_factor +
+model_interaction_jargon_year = lm(score ~ jargon_proportion:factor(year) +
   factor(year) +
-  factor(month), data = data)
-# Those should all be the same only moved by the intercept
-stargazer(model_interaction_jargon_year, sanity_check,
+  factor(month) - 1, data = data)
+anova(model_interaction_jargon_year, model_year_month)
+
+stargazer(model_interaction_jargon_year,
           type = "text",
-          omit = c("month", "jargon")
+          omit = 1:18
 )
 
 ```
 
 Okay seems like that works. Let's look at the interaction terms. I interpret this as how effective the jargon is in the different years.
 
-```{r}
-stargazer(model_interaction_jargon_year,
-          type = "text",
-          omit = 1:18
-)
-```
+But: Look at anova: Adding those interactions doesn't really make a difference, we should ignore it.
 
-```{r}
-anova(model_interaction_jargon_year, model_year)
-```
-
--\> Adding those interactions doesn't really make a difference, we should ignore it.
-
-According to the anova test, this does not seem significant.
+*Adding interactions between year and jargon doesn't really make a difference, we should ignore it.*
 
 We could do something similar for the month, but I am not sure if it is worth it. Let's do it for the **categories**.
 
 ```{r}
-# add a count to unique values
-data$fac_category = factor(data$link_flair_text)
-# I'm not sure whether I can do it in the following way, but it would be easier to interpret:
-model_interaction_jargon_category = lm(score ~
-                                         jargon_proportion:factor(link_flair_text)
-                                           - 1
-                                           +
-                                           factor(year)
-                                           +
-                                           factor(month)
-                                           +
-                                           factor(link_flair_text),
-                                       data = data
-)
-model_categories_no_interaction = lm(score ~
-                                       jargon_proportion
-                                         +
-                                         factor(year)
-                                         +
-                                         factor(month)
-                                         +
-                                         factor(link_flair_text),
-                                     data = data
-)
-```
-
--\> Let's first look if inlcuding the interactions significantly improves the model:
-
-```{r}
-anova(model_interaction_jargon_category, model_categories_no_interaction)
-
-```
-
-Yes it does -\> We can show that it is significant to
-
-```{r}
-stargazer(model_interaction_jargon_category, model_categories_no_interaction,
-          type = "text")
-```
-
-```{r}
-
-# add a count to unique values
-data$fac_category = factor(data$link_flair_text)
-# I'm not sure whether I can do it in the following way, but it would be easier to interpret:
-model_interaction_jargon_top_category = lm(score ~
+model_interaction_jargon_top_category = lm(log(score + 0.00001) ~
                                              jargon_proportion:factor(top_category)
-                                               - 1
                                                +
                                                factor(year)
                                                +
@@ -168,7 +92,7 @@ model_interaction_jargon_top_category = lm(score ~
                                                factor(top_category),
                                            data = data
 )
-model_top_categories_no_interaction = lm(score ~
+model_top_categories_no_interaction = lm(log(score + 0.00001) ~
                                            jargon_proportion
                                              +
                                              factor(year)
@@ -179,86 +103,58 @@ model_top_categories_no_interaction = lm(score ~
                                          data = data
 )
 anova(model_interaction_jargon_top_category, model_top_categories_no_interaction)
-stargazer(model_interaction_jargon_top_category,
-          type = "text"
-          #keep = 22:26,
-          #covariate.labels = c("Jargon x Engineering and Tech", "Jargon x Environmental Sciences", "Jargon x Life Sciences", "Jargon x Physical Sciences", "Jargon x Social Sciences")
+stargazer(model_interaction_jargon_top_category, model_top_categories_no_interaction, type = "text", omit = c("year", "month"),
+          covariate.labels = c("Jargon Proportion",
+                               "Environmental Sciences", "Life Sciences", "Physical Sciences", "Social Sciences",
+                               "Jargon x Engineering and Tech", "Jargon x Environmental Sciences", "Jargon x Life Sciences", "Jargon x Physical Sciences", "Jargon x Social Sciences")
 )
 ```
-Let's see if the top categories are worse than the detailed categories
-```{r}
-stargazer(model_interaction_jargon_top_category, model_interaction_jargon_category, type = "text")
-
-```
--> Go with top_category only, as it is more interpretable and readable and adjusted r2 is similar
-```{r}
-model_jargon_in_categories = lm(jargon_proportion ~ factor(link_flair_text), data = data)
-stargazer(model_jargon_in_categories, type = "text")
-```
 
 ```{r}
-# plot the jargon proportion in the categories
-ggplot(data, aes(x = top_category, y = jargon_proportion)) +
-  geom_boxplot() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Jargon proportion in different categories",
-       x = "Category",
-       y = "Jargon proportion")
+model_interaction_link_flair = data[, lm(log(score + 1) ~ jargon_proportion:factor(link_flair_text) +
+  factor(year) +
+  factor(month) +
+  factor(top_category))]
+stargazer(model_interaction_link_flair, type = "text", omit = 1:17)
 ```
 
-```{r}
-model_interaction_jargon_top_category$coefficients
-# get only the coefficients that contain jargon_proposrtion
+* Interaction terms between jargon and the top categories do seem to be interpretable and significant but not that more explanatory*
 
-model_interaction_jargon_top_category$coefficients[grep("jargon_proportion", names(model_interaction_jargon_top_category$coefficients))]
-# plot those 
-```
-
-
-```{r}
-coefficients_df <- broom::tidy(model_interaction_jargon_top_category)
-coefficients_df <- coefficients_df[str_detect(coefficients_df$term, "^jargon"),]
-ggplot(coefficients_df, aes(x = term, y = estimate)) +
-  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
-  geom_errorbar(aes(ymin = estimate - std.error, ymax = estimate + std.error), width = 0.2) +
-  labs(x = "Coefficient", y = "Estimate", title = "Coefficient Estimates with Standard Errors") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  scale_x_discrete(labels = c("Jargon x Engineering and Tech", "Jargon x Environmental Sciences", "Jargon x Life Sciences", "Jargon x Physical Sciences", "Jargon x Social Sciences"))
-```
+-\> Go with top_category only, as it is more interpretable and readable and adjusted r2 is similar
 
 ## Trying to make it more interpretable
+
 ```{r}
-data[, jargon_percentage_times_100 := (jargon_proportion + 0.00001) * 100]
-model_log = lm(log(score + 0.01) ~ jargon_proportion:factor(top_category) +
+data[, jargon_percentage_times_100 := (jargon_proportion) * 100]
+model_log = lm(log(score + 1) ~ jargon_proportion:factor(top_category) +
   factor(year) +
   factor(month) +
   factor(top_category), data = data)
-model_log_100_times = lm(log(score + 0.01) ~ jargon_percentage_times_100:factor(top_category) +
+model_log_100_times = lm(log(score + 1) ~ jargon_percentage_times_100:factor(top_category) +
   factor(year) +
   factor(month) +
   factor(top_category), data = data)
-model_log_log = lm(log(score + 0.01) ~ log(jargon_proportion + 0.00001):factor(top_category) +
-  factor(year) +
-  factor(month) +
-  factor(top_category), data = data)
-model_log_log_100_times = lm(log(score + 0.01) ~ log(jargon_percentage_times_100):factor(top_category) +
+model_log_log = lm(log(score + 1) ~ log(jargon_proportion + 0.00001):factor(top_category) +
   factor(year) +
   factor(month) +
   factor(top_category), data = data)
 
-stargazer(model_log, model_log_100_times, model_log_log, model_log_log_100_times, type = "text", omit = 1:17) # Why is this no differen?
+
+stargazer(model_log, model_log_100_times, model_log_log, type = "text", omit = 1:17) 
 ```
+
 ```{r}
-# summarizing this and making it nice
-model_interaction_jargon_top_category_new = lm(score ~ jargon_proportion:factor(top_category) +
-  factor(year) +
-  factor(month) +
-  factor(top_category), data = data)
-stargazer(model_interaction_jargon_top_category_new, type = "text", omit = 1:17)
-stargazer(model_log_100_times, model_log_log, type = "text", omit = 1:17)
+# Beautiful
+stargazer(model_log_100_times, model_log_log, type = "text", omit = 1:17, column.labels = c("Jargon x 100", "Log Jargon"),
+          covariate.labels = c("Evnironmental Sciences", "Life Sciences", "Physical Sciences", "Social Sciences",
+                               "Jargon x 100 x Engineering and Tech", "Jargon x 100 x Environmental Sciences", "Jargon x 100 x Life Sciences", "Jargon x 100 x Physical Sciences", "Jargon x 100 x Social Sciences",
+                               "Log Jargon x Engineering and Tech", "Log Jargon x Environmental Sciences", "Log Jargon x Life Sciences", "Log Jargon x Physical Sciences", "Log Jargon x Social Sciences"))
+```
+
+Exemplary interpretation: Social Sciences - A 1% increase in jargon_proportion results in an approximate 0.231% increase in score.
+
+```{r}
 stargazer(model_interaction_jargon_top_category_new, model_log_100_times, model_log_log, type = "text", omit = 1:17)
 
 ```
-
 
