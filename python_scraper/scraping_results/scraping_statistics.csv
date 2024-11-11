@@ -1,0 +1,3 @@
+category,total_urls,successful_scrapes,doi_found,comment_urls_used,success_rate,doi_rate,most_common_error
+news,317,166,3,1,0.5236593059936908,0.018072289156626505,str
+scientific,310,89,4,0,0.2870967741935484,0.0449438202247191,str
