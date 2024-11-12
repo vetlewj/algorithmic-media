@@ -1,3 +1,4 @@
-category,total_urls,successful_scrapes,doi_found,comment_urls_used,success_rate,doi_rate,most_common_error
-news,317,166,3,1,0.5236593059936908,0.018072289156626505,str
-scientific,310,89,4,0,0.2870967741935484,0.0449438202247191,str
+category,total_urls,successful_scrapes,doi_found,abstract_found,comment_urls_used,success_rate,doi_rate,abstract_rate,most_common_error,top_publisher
+repo,1,0,0,0,0,0.0,0.0,0.0,str,
+scientific,310,90,0,73,3,0.2903225806451613,0.0,0.8111111111111111,str,NatureHandler
+news,317,152,0,94,4,0.4794952681388013,0.0,0.618421052631579,str,GenericHandler
