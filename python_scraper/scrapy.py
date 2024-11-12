@@ -176,44 +176,127 @@ class NatureHandler(PublisherHandler):
         abstract = self._extract_abstract(soup)
         return doi, abstract
 
-    def _extract_doi(self, soup: BeautifulSoup, url: str) -> Optional[str]:
-        meta_tags = [
-            ('citation_doi', soup.find('meta', {'name': 'citation_doi'})),
-            ('DOI', soup.find('meta', {'name': 'DOI'})),
-            ('dc.identifier', soup.find('meta', {'name': 'dc.identifier'}))
-        ]
-        
-        for tag_name, tag in meta_tags:
-            if tag and tag.get('content'):
-                content = tag.get('content')
-                if content.startswith('doi:'):
-                    content = content[4:]
-                return content
-        
-        doi_elem = soup.find('em', text=re.compile(r'doi:\s*https://doi.org/'))
-        if doi_elem:
-            match = re.search(r'10\.\d{4}/[^"\s<>]+', doi_elem.text)
-            if match:
-                return match.group(0)
-                
-        canonical = soup.find('link', {'rel': 'canonical'})
-        if canonical and 'nature.com/articles/' in canonical.get('href', ''):
-            article_id = canonical['href'].split('/')[-1]
-            if article_id.startswith('d'):
-                return f'10.1038/{article_id}'
-        
-        return None
+    # In GenericHandler, update the DOI patterns:
+def _extract_doi(self, soup: BeautifulSoup, url: str) -> Optional[str]:
+    # Expanded DOI patterns to catch more variations
+    doi_patterns = [
+        r'10\.\d{2,9}/[-\._()/:A-Za-z0-9]+',  # More permissive
+        r'doi:?\s*(10\.\d{2,9}/[-\._()/:A-Za-z0-9]+)',
+        r'(?:dx\.)?doi\.org/(10\.\d{2,9}/[-\._()/:A-Za-z0-9]+)',
+        r'citation_doi" content="(10\.\d{2,9}/[-\._()/:A-Za-z0-9]+)"'
+    ]
+    
+    logging.debug(f"Attempting to extract DOI from URL: {url}")
+    
+    # Check text content for DOIs
+    for element in soup.find_all(['p', 'div', 'span', 'a']):
+        text = element.get_text()
+        if 'doi' in text.lower():
+            for pattern in doi_patterns:
+                match = re.search(pattern, text)
+                if match:
+                    doi = match.group(1) if 'doi' in pattern.lower() else match.group(0)
+                    logging.debug(f"Found DOI in text: {doi}")
+                    return doi
 
-    def _extract_abstract(self, soup: BeautifulSoup) -> Optional[str]:
-        abstract_section = soup.find('div', {'class': 'c-article-section__content'})
-        if abstract_section:
-            return abstract_section.get_text(strip=True)
+    # Check meta tags
+    meta_tags = [
+        ('citation_doi', soup.find('meta', {'name': 'citation_doi'})),
+        ('DC.Identifier', soup.find('meta', {'name': 'DC.Identifier'})),
+        ('dc.identifier', soup.find('meta', {'name': 'dc.identifier'})),
+        ('prism.doi', soup.find('meta', {'name': 'prism.doi'})),
+        ('doi', soup.find('meta', {'name': 'doi'})),
+        ('citation_doi', soup.find('meta', {'name': 'citation_doi'}))
+    ]
+    
+    for tag_name, tag in meta_tags:
+        if tag and tag.get('content'):
+            content = tag.get('content').strip()
+            if content.startswith('doi:'):
+                content = content[4:]
+            if content.startswith('https://doi.org/'):
+                content = content[16:]
+            for pattern in doi_patterns:
+                match = re.search(pattern, content)
+                if match:
+                    doi = match.group(1) if 'doi' in pattern.lower() else match.group(0)
+                    logging.debug(f"Found DOI in meta tag {tag_name}: {doi}")
+                    return doi
+    
+    # Check URL last
+    for pattern in doi_patterns:
+        match = re.search(pattern, url)
+        if match:
+            doi = match.group(1) if 'doi' in pattern.lower() else match.group(0)
+            logging.debug(f"Found DOI in URL: {doi}")
+            return doi
+            
+    logging.debug("No DOI found")
+    return None
+
+# Update process_url function to handle redirects and SSL:
+def process_url(url: str, category: str, comment: Optional[str] = None) -> Dict[str, Any]:
+    result = {
+        'url': url,
+        'success': False,
+        'doi_found': False,
+        'abstract_found': False,
+        'doi': None,
+        'abstract': None,
+        'extraction_method': None,
+        'error': None,
+        'source': 'main_url'
+    }
+    
+    try:
+        headers = {
+            'User-Agent': USER_AGENT,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        }
         
-        meta_desc = soup.find('meta', {'name': 'description'})
-        if meta_desc:
-            return meta_desc.get('content')
+        # Configure session for redirects and SSL
+        session = requests.Session()
+        session.verify = False  # Handle SSL issues
+        session.max_redirects = 5
         
-        return None
+        response = session.get(
+            url, 
+            timeout=TIMEOUT, 
+            headers=headers,
+            allow_redirects=True
+        )
+        response.raise_for_status()
+        
+        # Update URL after redirects
+        final_url = response.url
+        logging.debug(f"Final URL after redirects: {final_url}")
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        handler = get_publisher_handler(final_url)  # Use final URL for handler selection
+        doi, abstract = handler.extract_doi_and_abstract(soup, final_url)
+        
+        if doi:
+            logging.debug(f"DOI found: {doi}")
+        else:
+            logging.debug("No DOI found")
+            
+        result.update({
+            'success': True,
+            'doi_found': bool(doi),
+            'abstract_found': bool(abstract),
+            'doi': doi,
+            'abstract': abstract,
+            'extraction_method': handler.__class__.__name__,
+            'final_url': final_url
+        })
+        
+    except requests.exceptions.RequestException as e:
+        result.update({
+            'error': str(e)
+        })
+        logging.error(f"Error processing URL {url}: {str(e)}")
+    
+    return result
 class WileyHandler(PublisherHandler):
     """Handler for Wiley Online Library articles"""
     
