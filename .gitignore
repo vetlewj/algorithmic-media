@@ -16,3 +16,4 @@ jargon_metric/data/pmi_scores/
 /sensationalism_metric/models/sensationalism/
 /sensationalism_metric/models/generalization/
 /sensationalism_metric/models/certainty/
+.env
