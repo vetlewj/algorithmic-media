@@ -11,7 +11,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 def calculate_fc_using_gpt(
-    original_text, summary_text, original_title: None, fail_silent=True
+    original_text, summary_text, original_title: None, fail_silent=True, return_prompt=False
 ) -> int:
     """
     Calculate the factual consistency score using GPT-4o-mini
@@ -29,24 +29,27 @@ def calculate_fc_using_gpt(
 
     try:
         prompt = (
-            f"""Score the following {taskins} with respect to {aspect} on a discrete scale from 1 to 5, 
+            f'''Score the following {taskins} with respect to {aspect} on a discrete scale from 1 to 5, 
 where a score of 1 means “{antaspect}” and score of one 5 means “perfect {aspect}”. 
 Note that  {aspect} measures {aspectins}. 
 {f"Research Title: {original_title}" if original_title else ""}
 Research Abstract: {original_text}
 Reddit Summary: {summary_text}  
-Respond in the following format: """
-            + "{'score': *insert score here*}"
+Respond in the following format: '''
+            + '{"score": *insert score here*}'
         )
-
-        response = client.chat.completions.create(
-            messages=[
+        messages = [
                 {
                     "role": "system",
-                    "content": "You are an expert evaluator of scientifc reddit posts.",
+                    "content": "You are an expert evaluator of scientific reddit posts.",
                 },
                 {"role": "user", "content": prompt},
-            ],
+            ]
+
+        if return_prompt:
+            return messages
+        response = client.chat.completions.create(
+            messages=messages,
             model="gpt-4o-mini",
             temperature=0,
         )

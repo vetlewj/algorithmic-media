@@ -5,7 +5,7 @@ from fc_metric import calculate_fc_using_gpt
 
 tqdm.pandas()
 
-filename = "filtered_data_with_abstracts_repo.csv"
+filename = "filtered_data_with_abstracts.csv"
 df = pd.read_csv("../data/" + filename)
 df["fc_metric"] = df.progress_apply(
     lambda x: calculate_fc_using_gpt(
