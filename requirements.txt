@@ -1,11 +1,11 @@
-pandas==2.1.4
+pandas
 spacy
 matplotlib
 scipy
 openai
 seaborn
-numpy==1.26.4
+numpy
 tqdm
 torch
-transformers==4.44.2
+transformers
 datasets
