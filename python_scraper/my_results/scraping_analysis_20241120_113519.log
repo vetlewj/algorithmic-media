@@ -1,0 +1,10 @@
+2024-11-20 12:00:21,795 - INFO - Reached 25 minute time limit. Stopping gracefully...
+2024-11-20 12:00:21,870 - INFO - Saved 278 successful extractions
+2024-11-20 12:00:21,878 - INFO - Saved 268 failed extractions
+2024-11-20 12:00:21,878 - INFO - Saved extraction statistics
+2024-11-20 12:00:21,878 - INFO - ================================================================================
+2024-11-20 12:00:21,878 - INFO - EXTRACTION COMPLETE
+2024-11-20 12:00:21,878 - INFO - Success rate: 50.92%
+2024-11-20 12:00:21,886 - INFO - Successful extractions: 278
+2024-11-20 12:00:21,886 - INFO - Failed extractions: 268
+2024-11-20 12:00:21,886 - INFO - ================================================================================

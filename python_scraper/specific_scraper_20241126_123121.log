@@ -1,0 +1,31 @@
+Successfully loaded CSV using latin-1 encoding
+Number of news lines: 66708
+Number of science lines: 61196
+Number of repo lines: 14622
+Total lines: 142526
+
+Domain counts by category:
+--------------------------------------------------
+
+Most common news domain: www.sciencealert.com (1874 occurrences)
+
+Most common scientific domain: www.nature.com (9775 occurrences)
+
+Most common repo domain: www.ncbi.nlm.nih.gov (1397 occurrences)
+
+Saved domain filtered CSV with 13046 rows
+
+Unique domains in filtered dataset:
+{'www.nature.com', 'www.sciencealert.com', 'www.ncbi.nlm.nih.gov'}
+
+Unique categories in filtered dataset:
+{'repo', 'scientific', 'news'}
+Scraping news articles:   0%|                                                                                          | 0/1874 [00:00<?, ?it/s]Traceback (most recent call last):
+  File "C:\Users\Jared\Desktop\rsrchproj\algorithmic-media\python_scraper\scrapy.py", line 565, in <module>
+    main()
+  File "C:\Users\Jared\Desktop\rsrchproj\algorithmic-media\python_scraper\scrapy.py", line 493, in main
+    metadata = sciencealert_scraper(row['url'])
+  File "C:\Users\Jared\Desktop\rsrchproj\algorithmic-media\python_scraper\scrapy.py", line 20, in wrapper
+    signal.signal(signal.SIGALRM, _handle_timeout)
+AttributeError: module 'signal' has no attribute 'SIGALRM'. Did you mean: 'SIGABRT'?
+Scraping news articles:   0%|                                                                                          | 0/1874 [00:00<?, ?it/s]
