@@ -1,0 +1,105 @@
+```{r, include=FALSE}
+library(data.table)
+library(ggplot2)
+library(here)
+library(dplyr)
+library(progress)
+library(stargazer)
+library(stringr)
+library(broom)
+```
+
+```{r}
+data <- fread(here("data", "combined_for_analysis_sensationalism_jargon_categories_domain_labels.csv"))
+data[, sens_perc := as.numeric(sensationalism_score) * 100]
+data = na.omit(data)
+```
+
+```{r}
+model_linear = lm(score ~ sens_perc, data = data)
+model_log = lm(log(score + 1) ~ sens_perc, data = data)
+model_quadratic = lm(score ~ sens_perc + I(sens_perc^2), data = data)
+model_quadratic_log = lm(log(score + 1) ~ sens_perc + I(sens_perc^2), data = data)
+stargazer(model_linear, model_quadratic, model_log, model_quadratic_log, type='text', notes = c("Quad does not add value, log is better than linear.", 'Log interpretation: coef * 100 is relative change in score for 1%-point change in sensationalism score.'), 
+covariate.labels = c("Sensationalism score (%)", 'Sensationalism score (%) ** 2'))
+```
+
+
+```{r}
+# This is too much for the visualization to handle
+data$residuals = residuals(model_log)
+# subsample this at random
+data_sampled = data[sample(1:nrow(data), 1000),]
+ggplot(data_sampled, aes(x = sens_perc, y = residuals)) +
+  geom_point() +
+  geom_smooth(method = "loess") +
+  labs(title = "Residuals of the quadratic model",
+       x = "Sensationalism score",
+       y = "Residuals")
+
+```
+
+
+```{r}
+# finding out if the effect is because of the once that did not perform at all with the score of 0
+data_no_zero = data[data$score > 0,]
+model_log_no_zero = lm(log(score) ~ sens_perc, data = data_no_zero)
+model_log_g_one = lm(log(score) ~ sens_perc, data = data_no_zero[data_no_zero$score > 1,])
+model_log_g_three = lm(log(score) ~ sens_perc, data = data_no_zero[data_no_zero$score > 3,])
+stargazer(model_log, model_log_no_zero, model_log_g_one, model_log_g_three, type='text', column.labels=c('All', 'Score > 0', 'Score > 1', 'Score > 3'), notes = 
+"Excluding the posts that did not perform at all -> Effect is similar, but explanatory power higher. Using score > 1 filter for the rest of the analysis.", 
+covariate.labels = c("Sensationalism score (%)"))
+```
+```{r}
+residuals = residuals(model_log_g_one)
+
+filtered = copy(data[score > 1])
+filtered$residuals = residuals
+
+data_sampled = filtered[sample(1:nrow(data), 1000),]
+ggplot(data_sampled,aes( x = sens_perc, y = residuals)) +
+  geom_point() +
+  geom_smooth(method = "loess") +
+  labs(title = "Residuals of the log model for score > 1",
+       x = "Sensationalism score",
+       y = "Residuals")
+
+```
+```{r}
+model_log_repo = lm(log(score) ~ sens_perc, data = data[data$label_voting_manual == 'repo' & score > 1 ,])
+model_log_scientific = lm(log(score) ~ sens_perc, data = data[data$label_voting_manual == 'scientific'& score > 1,])
+model_log_news = lm(log(score) ~ sens_perc, data = data[data$label_voting_manual == 'news'& score > 1,])
+# on of the above
+model_log_combined = lm(log(score) ~ sens_perc, data = data[data$label_voting_manual %in% c('repo', 'scientific', 'news')& score > 1,])
+stargazer(model_log_repo, model_log_scientific, model_log_news, model_log_combined, type='text', column.labels=c('Repo', 'Scientific', 'News', 'Combined') , notes = c("Base levels of sensationalism differ between the domains.", 'Filtered for score > 1 and repo, scientific, news domains.'))
+```
+
+```{r}
+model_log_scam = lm(log(score) ~ sens_perc, data = data[data$label_voting_manual == 'scam'& score > 1,])
+model_log_social = lm(log(score) ~ sens_perc, data = data[data$label_voting_manual == 'social_media'& score > 1,])
+stargazer(model_log_scam, model_log_social, type='text', column.labels=c('Scam', 'Social Media'), notes = c("Base levels of sensationalism differ between the domains.", 'Filtered for score > 1 and scam, social media domains.', '~ 10k social media posts are excluded due to the score > 1 filter.'))
+
+```
+
+
+
+
+```{r}
+model_full = lm(log(score) ~ sens_perc * top_category, data = data[score> 1 & label_voting_manual %in% c('repo', 'scientific', 'news'),])
+stargazer(model_full, type='text', notes =
+          c(
+            'Base category is Engineering and Tech.', 
+                    'Physical and Social strongly deviate.', 
+                    'Filtered for score > 1 and repo, scientific, news domains.'
+          ))
+```
+
+```{r}
+model_full_link_flair = lm(log(score) ~ sens_perc * link_flair_text, data = data[score> 1 & label_voting_manual %in% c('repo', 'scientific', 'news'),])
+stargazer(model_full_link_flair, type='text', notes = c(
+  'Base category is Animal Science.',
+  'Economics effect strongly deviates.',
+  'Filtered for score > 1 and repo, scientific, news domains.'
+))
+```
+
