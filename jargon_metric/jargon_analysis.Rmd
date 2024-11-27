@@ -511,7 +511,8 @@ model_jargon_sens = lm(log(score) ~ jargon_percentage_times_100 +
 stargazer(model_jargon_sens,
           type = "text",
           omit = "factor", 
-          notes = c('Filtered for score > 1 and jargon proportion > 0.')
+          notes = c('Filtered for score > 1 and jargon proportion > 0.'),
+          covariate.labels = c('Jargon Proportion (%)')
 )
 ```
 
@@ -580,7 +581,7 @@ model_interaction_intervals = lm(
 )
 stargazer(model_interaction_intervals, type = "text", 
           notes = c(
-            'Filtered for score > 1 and repo, scientific, news, social media and scam domains.'
+            'Filtered for score > 1.','Repo, scientific, news, social media and scam domains.'
           )
           ,omit=1:21
           , covariate.labels = c('(5,20]', '(20,35]', '(35,50]', '(50,65]', '(65,80]', 'Jargon x (0,5]', 'Jargon x (5,20]', 'Jargon x (20,35]', 'Jargon x (35,50]', 'Jargon x (50,65]', 'Jargon x (65,80]')
@@ -611,7 +612,7 @@ model_interaction_jargon_score_top_category_all = lm(log(score) ~ jargon_percent
 stargazer(model_interaction_jargon_score_top_category, model_interaction_jargon_score_top_category_greater_20, type = "text", 
           omit = 1:17, 
           notes = c(
-            'Filtered for score > 1.'
+            'Filtered for score > 1 & Jargon > 0.'
           )
           ,covariate.labels = c('Env. Sciences', 'Life Sciences', 'Physical Sciences', 'Social Sciences', 'Jargon x Eng. and Tech', 'Jargon x Env Sciences', 'Jargon x Life Sciences', 'Jargon x Physical Sciences', 'Jargon x Social Sciences')
           ,column.labels = c('Jargon < 20', 'Jargon 20-35', 'Jargon 35-60')
@@ -619,7 +620,7 @@ stargazer(model_interaction_jargon_score_top_category, model_interaction_jargon_
 stargazer(model_interaction_jargon_score_top_category_greater_35, type = "text", 
           omit = 1:17, 
           notes = c(
-            'Filtered for score > 1.'
+            'Filtered for score > 1 & Jargon > 0.'
           )
           ,covariate.labels = c('Env. Sciences', 'Life Sciences', 'Physical Sciences', 'Social Sciences', 'Jargon x Eng. and Tech', 'Jargon x Env Sciences', 'Jargon x Life Sciences', 'Jargon x Physical Sciences', 'Jargon x Social Sciences')
           ,column.labels = c('Jargon 35-60')
@@ -627,7 +628,7 @@ stargazer(model_interaction_jargon_score_top_category_greater_35, type = "text",
 stargazer(model_interaction_jargon_score_top_category_all, type = "text", 
           omit = 1:17, 
           notes = c(
-            'Filtered for score > 1.'
+            'Filtered for score > 1 & Jargon > 0.'
           )
           ,covariate.labels = c('Env. Sciences', 'Life Sciences', 'Physical Sciences', 'Social Sciences', 'Jargon x Eng. and Tech', 'Jargon x Env Sciences', 'Jargon x Life Sciences', 'Jargon x Physical Sciences', 'Jargon x Social Sciences')
           ,column.labels = c('All')
@@ -635,7 +636,7 @@ stargazer(model_interaction_jargon_score_top_category_all, type = "text",
 stargazer(model_interaction_jargon_score_top_category, model_interaction_jargon_score_top_category_greater_20, model_interaction_jargon_score_top_category_greater_35, model_interaction_jargon_score_top_category_all, type = "latex", 
           omit = 1:17, 
           notes = c(
-            'Filtered for score > 1.'
+            'Filtered for score > 1 & Jargon > 0.'
           )
           ,covariate.labels = c('Env. Sciences', 'Life Sciences', 'Physical Sciences', 'Social Sciences', 'Jargon x Eng. and Tech', 'Jargon x Env Sciences', 'Jargon x Life Sciences', 'Jargon x Physical Sciences', 'Jargon x Social Sciences')
           #,column.labels = c('Jargon < 20', 'Jargon [20,35)', 'Jargon [35-60)')
