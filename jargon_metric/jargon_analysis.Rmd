@@ -4,17 +4,17 @@ pdf_document: default
 html_document: default
 ---
 
-[Just as a quick reminder on how to interpret logarithmic regression models: \
+[Just as a quick reminder on how to interpret logarithmic regression models:\
 **Rules for interpretation**](https://library.virginia.edu/data/articles/interpreting-log-transformations-in-a-linear-model#:~:text=Rules%20for%20interpretation)
 
 OK, you ran a regression/fit a linear model and some of your variables are log-transformed.
 
--   **Only the dependent/response variable is log-transformed**. Exponentiate the coefficient. This gives the **multiplicative factor for every one-unit increase in the independent variable**. \
-Example: the coefficient is 0.198. exp(0.198) = 1.218962. For every one-unit increase in the independent variable, our dependent variable increases by a factor of about 1.22, or 22%. Recall that multiplying a number by 1.22 is the same as increasing the number by 22%. Likewise, multiplying a number by, say 0.84, is the same as decreasing the number by 1 – 0.84 = 0.16, or 16%.\
--\> Notably for most small coefficients (like 0.024) this is directly 2.4% increase as exp(0.024) \~= 1.024
+-   **Only the dependent/response variable is log-transformed**. Exponentiate the coefficient. This gives the **multiplicative factor for every one-unit increase in the independent variable**.\
+    Example: the coefficient is 0.198. exp(0.198) = 1.218962. For every one-unit increase in the independent variable, our dependent variable increases by a factor of about 1.22, or 22%. Recall that multiplying a number by 1.22 is the same as increasing the number by 22%. Likewise, multiplying a number by, say 0.84, is the same as decreasing the number by 1 – 0.84 = 0.16, or 16%.\
+    -\> Notably for most small coefficients (like 0.024) this is directly 2.4% increase as exp(0.024) \~= 1.024
 
 -   **Both dependent/response variable and independent/predictor variable(s) are log-transformed**. Interpret the coefficient as **the percent increase in the dependent variable for every 1% increase in the independent variable**. Example: the coefficient is 0.198. For every 1% increase in the independent variable, our dependent variable increases by about 0.20%. For x percent increase, calculate 1.x to the power of the coefficient, subtract 1, and multiply by 100. Example: For every 20% increase in the independent variable, our dependent variable increases by about (1.20 ^0.198^ - 1) \* 100 = 3.7 percent.\
--\> Already in percentage if double log!
+    -\> Already in percentage if double log!
 
 ```{r, include=FALSE}
 library(data.table)
@@ -35,6 +35,8 @@ data[, top_category := gsub("Engineering & Tech", "Engineering and Tech", top_ca
 data <- data[, -1]
 sum(is.na(data))
 data = na.omit(data)
+data[, jargon_percentage_times_100 := (jargon_proportion) * 100]
+
 colnames(data)
 ```
 
@@ -168,7 +170,6 @@ stargazer(model_interaction_link_flair_log, model_interaction_top_cat_log, type 
 ## Trying to make it more interpretable
 
 ```{r, include=TRUE}
-data[, jargon_percentage_times_100 := (jargon_proportion) * 100]
 model_interaction_no_log = lm(score ~ jargon_percentage_times_100:factor(top_category) +
   factor(year) +
   factor(month) +
@@ -195,12 +196,19 @@ This table presents regression results that explain variations in `score`, `log(
 This column examines the raw `score` as the dependent variable. The coefficients here represent absolute changes in `score` associated with each scientific discipline or the influence of jargon on the score.
 
 1.  **Environmental Sciences (590.998)**
+
 -   **Interpretation**: Articles in the `Environmental Sciences` category are associated with a substantial increase of about **591 points** in score compared to the baseline category, indicating significantly higher engagement.
+
 2.  **Life Sciences (531.648)**
+
 -   **Interpretation**: Articles in the `Life Sciences` category are associated with an increase of about **532 points** in score, also suggesting strong engagement, though slightly lower than `Environmental Sciences`.
+
 3.  **Physical Sciences (-49.573)**
+
 -   **Interpretation**: Articles in `Physical Sciences` are associated with a decrease of approximately **50 points** in score, indicating lower engagement compared to the baseline.
+
 4.  **Social Sciences (1,326.293)**
+
 -   **Interpretation**: `Social Sciences` articles are associated with the largest increase, about **1,326 points** in score, making them the most engaging among these disciplines.
 
 #### Jargon x 100 Interactions
@@ -208,14 +216,23 @@ This column examines the raw `score` as the dependent variable. The coefficients
 The interaction terms of `Jargon x 100` with each discipline indicate how a 1% increase in jargon affects the score within each specific discipline.
 
 1.  **Jargon x 100 x Engineering and Tech (3.985)**
+
 -   **Interpretation**: In `Engineering and Technology`, each 1% increase in jargon correlates with about a **4-point increase** in score, but this effect is not statistically significant.
+
 2.  **Jargon x 100 x Environmental Sciences (6.811)**
+
 -   **Interpretation**: In `Environmental Sciences`, each 1% increase in jargon correlates with about a **6.8-point increase** in score, significant at the 0.1 level. This suggests a moderate positive impact of jargon on engagement.
+
 3.  **Jargon x 100 x Life Sciences (4.116)**
+
 -   **Interpretation**: In `Life Sciences`, each 1% increase in jargon correlates with an approximate **4-point increase** in score, significant at the 1% level, showing that jargon slightly enhances engagement in this category.
+
 4.  **Jargon x 100 x Physical Sciences (4.265)**
+
 -   **Interpretation**: In `Physical Sciences`, each 1% increase in jargon correlates with a **4.3-point increase** in score, significant at the 0.1 level, indicating a small positive effect of jargon.
+
 5.  **Jargon x 100 x Social Sciences (28.578)**
+
 -   **Interpretation**: In `Social Sciences`, each 1% increase in jargon results in a substantial **28.6-point increase** in score, indicating a strong positive impact of jargon on engagement in this field.
 
 **Summary**: In terms of raw scores, `Social Sciences` articles are the most engaging, followed by `Environmental Sciences` and `Life Sciences`. The impact of jargon is generally positive across disciplines, with the strongest effect in `Social Sciences`.
@@ -225,12 +242,19 @@ The interaction terms of `Jargon x 100` with each discipline indicate how a 1% i
 This column uses a log-transformed version of the score, so the coefficients can be interpreted as percentage changes in the score.
 
 1.  **Environmental Sciences (1.312)**
+
 -   **Interpretation**: Articles in `Environmental Sciences` are associated with an approximate **271% increase** in score compared to the baseline (calculated as $e^{1.312} - 1$), indicating high engagement.
+
 2.  **Life Sciences (0.888)**
+
 -   **Interpretation**: Articles in `Life Sciences` are associated with a **143.1% increase** in score, showing strong engagement.
+
 3.  **Physical Sciences (0.413)**
+
 -   **Interpretation**: Articles in `Physical Sciences` are associated with a **51.1% increase** in score, though this is lower than the other disciplines.
+
 4.  **Social Sciences (1.206)**
+
 -   **Interpretation**: Articles in `Social Sciences` show a **234.2% increase** in score, also indicating high engagement.
 
 #### Jargon x 100 Interactions
@@ -238,14 +262,23 @@ This column uses a log-transformed version of the score, so the coefficients can
 These interaction terms show how a 1% (percentage points, meaning e.g. from 20 to 21 in jargon proportion) increase in jargon impacts the engagement score within each discipline.
 
 1.  **Jargon x 100 x Engineering and Tech (0.025)**
+
 -   **Interpretation**: In `Engineering and Technology`, each 1% increase in jargon is associated with a **2.5% increase** in score, suggesting a small positive impact of jargon.
+
 2.  **Jargon x 100 x Environmental Sciences (0.015)**
+
 -   **Interpretation**: In `Environmental Sciences`, each 1% increase in jargon results in a **1.5% increase** in score, indicating a mild positive effect.
+
 3.  **Jargon x 100 x Life Sciences (0.021)**
+
 -   **Interpretation**: In `Life Sciences`, each 1% increase in jargon results in a **2.1% increase** in score, showing a small positive impact of jargon.
+
 4.  **Jargon x 100 x Physical Sciences (0.024)**
+
 -   **Interpretation**: In `Physical Sciences`, each 1% increase in jargon leads to a **2.4% increase** in score, suggesting a modest positive effect of jargon.
+
 5.  **Jargon x 100 x Social Sciences (0.032)**
+
 -   **Interpretation**: In `Social Sciences`, each 1% increase in jargon results in a **3.2% increase** in score, indicating a stronger positive effect of jargon.
 
 **Summary**: In this log-transformed model, `Environmental Sciences` and `Social Sciences` show the highest percentage increases in engagement. The interaction terms indicate that jargon positively affects engagement across disciplines, with the strongest effect in `Social Sciences`.
@@ -253,12 +286,19 @@ These interaction terms show how a 1% (percentage points, meaning e.g. from 20 t
 ### Column (3): Alternative Log Score Transformation (Interpretation Similar to Column (2))
 
 1.  **Environmental Sciences (1.011)**
+
 -   **Interpretation**: Articles in `Environmental Sciences` are associated with a **174.7% increase** in score, indicating high engagement.
+
 2.  **Life Sciences (0.776)**
+
 -   **Interpretation**: Articles in `Life Sciences` show a **117.3% increase** in score, suggesting strong engagement.
+
 3.  **Physical Sciences (0.303)**
+
 -   **Interpretation**: Articles in `Physical Sciences` are associated with a **35.4% increase** in score, a more modest level of engagement.
+
 4.  **Social Sciences (1.375)**
+
 -   **Interpretation**: Articles in `Social Sciences` exhibit a **294.8% increase** in score, indicating the highest engagement in this model.
 
 #### Log Jargon Interactions
@@ -266,14 +306,23 @@ These interaction terms show how a 1% (percentage points, meaning e.g. from 20 t
 These terms capture how logarithmic increases in jargon affect score within each discipline.
 
 1.  **Log Jargon x Engineering and Tech (0.122)**
+
 -   **Interpretation**: A 1% increase in jargon in `Engineering and Technology` is associated with a **1.22% increase** in score, showing a small positive effect.
+
 2.  **Log Jargon x Environmental Sciences (0.120)**
+
 -   **Interpretation**: In `Environmental Sciences`, a 10% increase in jargon correlates with a **1.20% increase** in score, showing a small positive impact.
+
 3.  **Log Jargon x Life Sciences (0.131)**
+
 -   **Interpretation**: In `Life Sciences`, a 10% increase in jargon correlates with a **1.31% increase** in score, suggesting a small positive effect.
+
 4.  **Log Jargon x Physical Sciences (0.111)**
+
 -   **Interpretation**: In `Physical Sciences`, a 10% increase in jargon is associated with a **1.11% increase** in score, indicating a mild positive effect.
+
 5.  **Log Jargon x Social Sciences (0.186)**
+
 -   **Interpretation**: In `Social Sciences`, a 10% increase in jargon correlates with a **1.86% increase** in score, showing the strongest positive effect.
 
 **Summary**: Across the models, `Social Sciences` consistently have the highest engagement scores, followed by `Environmental Sciences` and `Life Sciences`. In all columns, jargon has a positive impact on engagement, particularly in `Social Sciences`. This implies that technical language may enhance engagement, especially in disciplines where readers expect or value jargon.
@@ -391,24 +440,24 @@ Interpretation: e\^ coefficient - 1 x 100 = % change in jargon_proportion / scor
 This column shows how each category affects the jargon proportion. The interpretation below reflects changes in jargon proportion compared to the reference category.
 
 1.  **`scam` (-2.773)**: $$
-\text{Percentage change} = (e^{-2.773} - 1) \times 100\% \approx -93.9\%
-$$ **Interpretation**: `Scam` articles use significantly less jargon, with an approximate **93.9% decrease** in jargon proportion compared to the reference category.
+    \text{Percentage change} = (e^{-2.773} - 1) \times 100\% \approx -93.9\%
+    $$ **Interpretation**: `Scam` articles use significantly less jargon, with an approximate **93.9% decrease** in jargon proportion compared to the reference category.
 
 2.  **`social_media` (-3.607)**: $$
-\text{Percentage change} = (e^{-3.607} - 1) \times 100\% \approx -97.3\%
-$$ **Interpretation**: `Social media` posts also use much less jargon, showing an approximate **97.3% decrease** in jargon proportion compared to the reference.
+    \text{Percentage change} = (e^{-3.607} - 1) \times 100\% \approx -97.3\%
+    $$ **Interpretation**: `Social media` posts also use much less jargon, showing an approximate **97.3% decrease** in jargon proportion compared to the reference.
 
 3.  **`news` (0.059)**: $$
-\text{Percentage change} = (e^{0.059} - 1) \times 100\% \approx +6.1\%
-$$ **Interpretation**: `News` articles have a slightly higher jargon proportion, with an approximate **6.1% increase** in jargon compared to the reference, though this increase is not statistically significant at conventional levels (e.g., p \< 0.05).
+    \text{Percentage change} = (e^{0.059} - 1) \times 100\% \approx +6.1\%
+    $$ **Interpretation**: `News` articles have a slightly higher jargon proportion, with an approximate **6.1% increase** in jargon compared to the reference, though this increase is not statistically significant at conventional levels (e.g., p \< 0.05).
 
 4.  **`scientific` (1.115)**: $$
-\text{Percentage change} = (e^{1.115} - 1) \times 100\% \approx +205.1\%
-$$ **Interpretation**: `Scientific` articles, as expected, use more jargon, with an approximate **205.1% increase** in jargon proportion compared to the reference. This significant increase likely reflects the technical nature of scientific content.
+    \text{Percentage change} = (e^{1.115} - 1) \times 100\% \approx +205.1\%
+    $$ **Interpretation**: `Scientific` articles, as expected, use more jargon, with an approximate **205.1% increase** in jargon proportion compared to the reference. This significant increase likely reflects the technical nature of scientific content.
 
 5.  **`repo` (0.095)**: $$
-\text{Percentage change} = (e^{0.095} - 1) \times 100\% \approx +10.0\%
-$$ **Interpretation**: `Repo` articles (likely referring to articles published on scientific repositories) show a **10.0% increase** in jargon compared to the reference, though this increase is modest and not statistically significant.
+    \text{Percentage change} = (e^{0.095} - 1) \times 100\% \approx +10.0\%
+    $$ **Interpretation**: `Repo` articles (likely referring to articles published on scientific repositories) show a **10.0% increase** in jargon compared to the reference, though this increase is modest and not statistically significant.
 
 **Summary**: - **`Scam` and `social_media`** categories have significantly lower jargon levels, suggesting that content in these categories is generally more accessible or written in simpler language. - **`Scientific` and `repo`** categories are associated with higher jargon, with `scientific` articles showing a large increase, indicating their complex and technical nature. - **`News`** articles show a slight increase in jargon, but this effect is modest and not statistically robust.
 
@@ -417,24 +466,24 @@ $$ **Interpretation**: `Repo` articles (likely referring to articles published o
 This column reflects how each category impacts the engagement score (measured as log-transformed score). The interpretations below represent changes in score compared to the reference category.
 
 1.  **`scam` (-0.486)**: $$
-\text{Percentage change} = (e^{-0.486} - 1) \times 100\% \approx -38.5\%
-$$ **Interpretation**: `Scam` articles are associated with an approximate **38.5% decrease** in engagement score compared to the reference, suggesting lower user engagement.
+    \text{Percentage change} = (e^{-0.486} - 1) \times 100\% \approx -38.5\%
+    $$ **Interpretation**: `Scam` articles are associated with an approximate **38.5% decrease** in engagement score compared to the reference, suggesting lower user engagement.
 
 2.  **`social_media` (-0.794)**: $$
-\text{Percentage change} = (e^{-0.794} - 1) \times 100\% \approx -55.7\%
-$$ **Interpretation**: `Social media` posts also show a decrease in engagement, with an approximate **55.7% lower score** than the reference. This decrease suggests that content in this category receives less engagement on average.
+    \text{Percentage change} = (e^{-0.794} - 1) \times 100\% \approx -55.7\%
+    $$ **Interpretation**: `Social media` posts also show a decrease in engagement, with an approximate **55.7% lower score** than the reference. This decrease suggests that content in this category receives less engagement on average.
 
 3.  **`news` (1.680)**: $$
-\text{Percentage change} = (e^{1.680} - 1) \times 100\% \approx +438.1\%
-$$ **Interpretation**: `News` articles are associated with a substantial **438.1% increase** in engagement score, indicating that they are highly engaging and tend to attract more interactions compared to the reference.
+    \text{Percentage change} = (e^{1.680} - 1) \times 100\% \approx +438.1\%
+    $$ **Interpretation**: `News` articles are associated with a substantial **438.1% increase** in engagement score, indicating that they are highly engaging and tend to attract more interactions compared to the reference.
 
 4.  **`scientific` (1.551)**: $$
-\text{Percentage change} = (e^{1.551} - 1) \times 100\% \approx +368.8\%
-$$ **Interpretation**: `Scientific` articles also see a significant **368.8% increase** in engagement score, suggesting they are highly engaging, likely due to interest in scientific discoveries or discussions.
+    \text{Percentage change} = (e^{1.551} - 1) \times 100\% \approx +368.8\%
+    $$ **Interpretation**: `Scientific` articles also see a significant **368.8% increase** in engagement score, suggesting they are highly engaging, likely due to interest in scientific discoveries or discussions.
 
 5.  **`repo` (1.087)**: $$
-\text{Percentage change} = (e^{1.087} - 1) \times 100\% \approx +196.6\%
-$$ **Interpretation**: `Repo` articles have an approximate **196.6% increase** in engagement score compared to the reference. This suggests that articles published on repositories are relatively engaging, possibly because they often feature new research findings.
+    \text{Percentage change} = (e^{1.087} - 1) \times 100\% \approx +196.6\%
+    $$ **Interpretation**: `Repo` articles have an approximate **196.6% increase** in engagement score compared to the reference. This suggests that articles published on repositories are relatively engaging, possibly because they often feature new research findings.
 
 **Summary**: - **`News`, `scientific`, and `repo`** articles show large increases in engagement, with `news` articles having the highest boost in score. This indicates that these categories are popular and likely to receive more upvotes and comments. - **`Scam` and `social_media`** categories, in contrast, see significant decreases in engagement, suggesting that users may be less interested in these types of content.
 
@@ -446,15 +495,153 @@ $$ **Interpretation**: `Repo` articles have an approximate **196.6% increase** i
 These findings align with typical audience interests on science-related forums, where scientific discoveries, research, and news are more engaging than less credible or informal sources.
 
 # Interaction jargon to log score within domains
-```{r}
-model_interaction_jargon_score_domains = lm(log(score + 1) ~ jargon_percentage_times_100:factor(label_voting_manual) +
+
+
+
+
+
+
+# Following is valid output::
+
+```{r, include=TRUE}
+model_jargon_sens = lm(log(score) ~ jargon_percentage_times_100 + 
   factor(year) +
   factor(month) +
-  factor(label_voting_manual), data = data)
-stargazer(model_interaction_jargon_score_domains, type = "text", omit = 1:18)
+  factor(top_category), data = data[score > 1 & jargon_proportion > 0,])
+stargazer(model_jargon_sens,
+          type = "text",
+          omit = "factor", 
+          notes = c('Filtered for score > 1 and jargon proportion > 0.'),
+          covariate.labels = c('Jargon Proportion (%)')
+)
 ```
-repo: 9.05212919314
-scientific: 18.1923286049
-news: 15.4405937628
-social_media: 1.8202975923
-scam: 1.9620699247
+
+
+```{r}
+model_interaction_jargon_score_label_voting_manual = lm(log(score) ~ jargon_percentage_times_100:factor(label_voting_manual) +
+  factor(year) +
+  factor(month) +
+  factor(label_voting_manual), 
+  data = data[score > 1 & label_voting_manual %in% c('repo', 'scientific', 'news', 'social_media', 'scam') & jargon_percentage_times_100 < 20 & jargon_percentage_times_100 > 0,])
+
+model_interaction_jargon_score_label_voting_manual_greater_20 = lm(log(score) ~ jargon_percentage_times_100:factor(label_voting_manual) +
+  factor(year) +
+  factor(month) +
+  factor(label_voting_manual), 
+  data = data[score > 1 & label_voting_manual %in% c('repo', 'scientific', 'news', 'social_media', 'scam') & jargon_percentage_times_100 >= 20 & jargon_percentage_times_100 < 35,])
+
+model_interaction_jargon_score_label_voting_manual_greater_35 = lm(log(score) ~ jargon_percentage_times_100:factor(label_voting_manual) +
+  factor(year) +
+  factor(month) +
+  factor(label_voting_manual), 
+  data = data[score > 1 & label_voting_manual %in% c('repo', 'scientific', 'news', 'social_media', 'scam') & jargon_percentage_times_100 >= 35 & jargon_percentage_times_100 < 60,])
+
+model_interaction_jargon_score_label_voting_manual_all = lm(log(score) ~ jargon_percentage_times_100:factor(label_voting_manual) +
+  factor(year) +
+  factor(month) +
+  factor(label_voting_manual), 
+  data = data[score > 1 & label_voting_manual %in% c('repo', 'scientific', 'news', 'social_media', 'scam') & jargon_percentage_times_100 >0,])
+
+stargazer(model_interaction_jargon_score_label_voting_manual, model_interaction_jargon_score_label_voting_manual_greater_20, type = "text", omit = 1:17, 
+          notes = c(
+            'Filtered for score > 1.'
+          ),
+          covariate.labels = c('Repo', 'Scam', 'Scientific', 'Social Media', 'Jargon x News', 'Jargon x Repo', 'Jargon x Scam', 'Jargon x Scientific', 'Jargon x Social Media'),
+          column.labels = c('Jargon < 20', 'Jargon [20,35)', 'Jargon [35-60)')
+          )
+stargazer(model_interaction_jargon_score_label_voting_manual_greater_35, type = "text", omit = 1:17, 
+          notes = c(
+            'Filtered for score > 1.'
+          ),
+          covariate.labels = c('Repo', 'Scam', 'Scientific', 'Social Media', 'Jargon x News', 'Jargon x Repo', 'Jargon x Scam', 'Jargon x Scientific', 'Jargon x Social Media'),
+          column.labels = c('Jargon [35-60)')
+          )
+stargazer(model_interaction_jargon_score_label_voting_manual_all, type = "text", omit = 1:17, 
+          notes = c(
+            'Filtered for score > 1.'
+          ),
+          covariate.labels = c('Repo', 'Scam', 'Scientific', 'Social Media', 'Jargon x News', 'Jargon x Repo', 'Jargon x Scam', 'Jargon x Scientific', 'Jargon x Social Media'),
+          column.labels = c('All Jargon'))
+```
+
+```{r}
+
+# do the above for each interval from 0-5, 5-10, 10-15, 15-20, 20-25, 25-30, 30-35, 35-40, 40-45, 45-50, 50-55, 55-60, 60-65, 65-70, 70-75, 75-80, 80-85, 85-90, 90-95, 95-100. Therefore add a new column to the data frame with the interval and interact with that.
+
+data[, jargon_interval := NA]
+data[, jargon_interval := cut(jargon_percentage_times_100, breaks = seq(5, 100, by = 15))]
+data[is.na(jargon_interval), jargon_interval := '(0,5]']
+# order by jargon_prop times 100
+model_interaction_intervals = lm(
+  log(score) ~ factor(jargon_interval, levels = c('(0,5]', '(5,20]', '(20,35]', '(35,50]', '(50,65]', '(65,80]')):jargon_percentage_times_100 +
+    factor(year) +
+    factor(month) +
+    factor(label_voting_manual) + 
+    factor(jargon_interval, levels = c('(0,5]', '(5,20]', '(20,35]', '(35,50]', '(50,65]', '(65,80]')), data = data[score> 1 & jargon_proportion  > 0 & label_voting_manual %in% c('repo', 'scientific', 'news', 'social_media', 'scam'),]
+)
+stargazer(model_interaction_intervals, type = "text", 
+          notes = c(
+            'Filtered for score > 1.','Repo, scientific, news, social media and scam domains.'
+          )
+          ,omit=1:21
+          , covariate.labels = c('(5,20]', '(20,35]', '(35,50]', '(50,65]', '(65,80]', 'Jargon x (0,5]', 'Jargon x (5,20]', 'Jargon x (20,35]', 'Jargon x (35,50]', 'Jargon x (50,65]', 'Jargon x (65,80]')
+          )
+
+```
+```{r}
+model_interaction_jargon_score_top_category = lm(log(score) ~ jargon_percentage_times_100:factor(top_category) +
+  factor(year) +
+  factor(month) +
+  factor(top_category), data = data[score> 1 & label_voting_manual %in% c('repo', 'scientific', 'news', 'social_media', 'scam') & jargon_percentage_times_100 < 20 & jargon_percentage_times_100 > 0,])
+
+model_interaction_jargon_score_top_category_greater_20 = lm(log(score) ~ jargon_percentage_times_100:factor(top_category) +
+  factor(year) +
+  factor(month) +
+  factor(top_category), data = data[score> 1 & label_voting_manual %in% c('repo', 'scientific', 'news', 'social_media', 'scam') & jargon_percentage_times_100 >= 20 & jargon_percentage_times_100 < 35,])
+
+model_interaction_jargon_score_top_category_greater_35 = lm(log(score) ~ jargon_percentage_times_100:factor(top_category) +
+  factor(year) +
+  factor(month) +
+  factor(top_category), data = data[score> 1 & label_voting_manual %in% c('repo', 'scientific', 'news', 'social_media', 'scam') & jargon_percentage_times_100 >= 35 & jargon_percentage_times_100 < 60,])
+
+model_interaction_jargon_score_top_category_all = lm(log(score) ~ jargon_percentage_times_100:factor(top_category) +
+  factor(year) +
+  factor(month) +
+  factor(top_category), data = data[score> 1 & label_voting_manual %in% c('repo', 'scientific', 'news', 'social_media', 'scam') & jargon_proportion > 0])
+
+stargazer(model_interaction_jargon_score_top_category, model_interaction_jargon_score_top_category_greater_20, type = "text", 
+          omit = 1:17, 
+          notes = c(
+            'Filtered for score > 1 & Jargon > 0.'
+          )
+          ,covariate.labels = c('Env. Sciences', 'Life Sciences', 'Physical Sciences', 'Social Sciences', 'Jargon x Eng. and Tech', 'Jargon x Env Sciences', 'Jargon x Life Sciences', 'Jargon x Physical Sciences', 'Jargon x Social Sciences')
+          ,column.labels = c('Jargon < 20', 'Jargon 20-35', 'Jargon 35-60')
+          )
+stargazer(model_interaction_jargon_score_top_category_greater_35, type = "text", 
+          omit = 1:17, 
+          notes = c(
+            'Filtered for score > 1 & Jargon > 0.'
+          )
+          ,covariate.labels = c('Env. Sciences', 'Life Sciences', 'Physical Sciences', 'Social Sciences', 'Jargon x Eng. and Tech', 'Jargon x Env Sciences', 'Jargon x Life Sciences', 'Jargon x Physical Sciences', 'Jargon x Social Sciences')
+          ,column.labels = c('Jargon 35-60')
+          )
+stargazer(model_interaction_jargon_score_top_category_all, type = "text", 
+          omit = 1:17, 
+          notes = c(
+            'Filtered for score > 1 & Jargon > 0.'
+          )
+          ,covariate.labels = c('Env. Sciences', 'Life Sciences', 'Physical Sciences', 'Social Sciences', 'Jargon x Eng. and Tech', 'Jargon x Env Sciences', 'Jargon x Life Sciences', 'Jargon x Physical Sciences', 'Jargon x Social Sciences')
+          ,column.labels = c('All')
+          )
+stargazer(model_interaction_jargon_score_top_category, model_interaction_jargon_score_top_category_greater_20, model_interaction_jargon_score_top_category_greater_35, model_interaction_jargon_score_top_category_all, type = "latex", 
+          omit = 1:17, 
+          notes = c(
+            'Filtered for score > 1 & Jargon > 0.'
+          )
+          ,covariate.labels = c('Env. Sciences', 'Life Sciences', 'Physical Sciences', 'Social Sciences', 'Jargon x Eng. and Tech', 'Jargon x Env Sciences', 'Jargon x Life Sciences', 'Jargon x Physical Sciences', 'Jargon x Social Sciences')
+          #,column.labels = c('Jargon < 20', 'Jargon [20,35)', 'Jargon [35-60)')
+          )
+```
+
+
+repo: 9.05212919314 scientific: 18.1923286049 news: 15.4405937628 social_media: 1.8202975923 scam: 1.9620699247
