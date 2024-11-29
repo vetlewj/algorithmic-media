@@ -1,6 +1,4 @@
-# =====================================
-# CONFIGURATION SETTINGS
-# =====================================
+# Configuration Settings
 TESTING = True  # Set to False for full run
 TEST_INTERVAL = 1  # Process every Nth link
 TOP_N_DOMAINS = 50  # Number of top domains to process per category
@@ -79,10 +77,8 @@ from tqdm import tqdm
 import time
 from typing import Dict, Optional, Tuple, Union, Any
 
-# Create results directory if it doesn't exist
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
-# Set up logging
 logging.basicConfig(
     filename=f'{RESULTS_DIR}/scraping_analysis_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log',
     level=logging.INFO,
@@ -94,7 +90,6 @@ class PublisherHandler:
     
     @staticmethod
     def get_handler(domain: str) -> 'PublisherHandler':
-        """Factory method to get appropriate handler for domain"""
         domain = domain.lower()
         for publisher, domains in ACADEMIC_DOMAINS.items():
             if any(d in domain for d in domains):
@@ -104,7 +99,6 @@ class PublisherHandler:
         return GenericHandler()
 
     def extract_doi_and_abstract(self, soup: BeautifulSoup, url: str) -> Tuple[Optional[str], Optional[str]]:
-        """Extract DOI and abstract using publisher-specific methods"""
         raise NotImplementedError
 
 class GenericHandler(PublisherHandler):
@@ -116,14 +110,12 @@ class GenericHandler(PublisherHandler):
         return doi, abstract
 
     def _extract_doi(self, soup: BeautifulSoup, url: str) -> Optional[str]:
-        # Try common DOI patterns
         doi_patterns = [
             r'10\.\d{4,9}/[-._;()/:\w]+',
             r'doi:\s*(10\.\d{4,9}/[-._;()/:\w]+)',
             r'doi\.org/(10\.\d{4,9}/[-._;()/:\w]+)'
         ]
         
-        # Check meta tags
         meta_tags = [
             ('citation_doi', soup.find('meta', {'name': 'citation_doi'})),
             ('DC.Identifier', soup.find('meta', {'name': 'DC.Identifier'})),
@@ -139,7 +131,6 @@ class GenericHandler(PublisherHandler):
                     if match:
                         return match.group(1) if 'doi:' in pattern else match.group(0)
         
-        # Check URL
         for pattern in doi_patterns:
             match = re.search(pattern, url)
             if match:
@@ -148,7 +139,6 @@ class GenericHandler(PublisherHandler):
         return None
 
     def _extract_abstract(self, soup: BeautifulSoup) -> Optional[str]:
-        # Try common abstract locations
         abstract_selectors = [
             'meta[name="description"]',
             'meta[name="dc.description"]',
@@ -176,11 +166,9 @@ class NatureHandler(PublisherHandler):
         abstract = self._extract_abstract(soup)
         return doi, abstract
 
-    # In GenericHandler, update the DOI patterns:
 def _extract_doi(self, soup: BeautifulSoup, url: str) -> Optional[str]:
-    # Expanded DOI patterns to catch more variations
     doi_patterns = [
-        r'10\.\d{2,9}/[-\._()/:A-Za-z0-9]+',  # More permissive
+        r'10\.\d{2,9}/[-\._()/:A-Za-z0-9]+',
         r'doi:?\s*(10\.\d{2,9}/[-\._()/:A-Za-z0-9]+)',
         r'(?:dx\.)?doi\.org/(10\.\d{2,9}/[-\._()/:A-Za-z0-9]+)',
         r'citation_doi" content="(10\.\d{2,9}/[-\._()/:A-Za-z0-9]+)"'
@@ -188,7 +176,6 @@ def _extract_doi(self, soup: BeautifulSoup, url: str) -> Optional[str]:
     
     logging.debug(f"Attempting to extract DOI from URL: {url}")
     
-    # Check text content for DOIs
     for element in soup.find_all(['p', 'div', 'span', 'a']):
         text = element.get_text()
         if 'doi' in text.lower():
@@ -199,7 +186,6 @@ def _extract_doi(self, soup: BeautifulSoup, url: str) -> Optional[str]:
                     logging.debug(f"Found DOI in text: {doi}")
                     return doi
 
-    # Check meta tags
     meta_tags = [
         ('citation_doi', soup.find('meta', {'name': 'citation_doi'})),
         ('DC.Identifier', soup.find('meta', {'name': 'DC.Identifier'})),
@@ -223,7 +209,6 @@ def _extract_doi(self, soup: BeautifulSoup, url: str) -> Optional[str]:
                     logging.debug(f"Found DOI in meta tag {tag_name}: {doi}")
                     return doi
     
-    # Check URL last
     for pattern in doi_patterns:
         match = re.search(pattern, url)
         if match:
@@ -234,7 +219,6 @@ def _extract_doi(self, soup: BeautifulSoup, url: str) -> Optional[str]:
     logging.debug("No DOI found")
     return None
 
-# Update process_url function to handle redirects and SSL:
 def process_url(url: str, category: str, comment: Optional[str] = None) -> Dict[str, Any]:
     result = {
         'url': url,
@@ -254,9 +238,8 @@ def process_url(url: str, category: str, comment: Optional[str] = None) -> Dict[
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
         }
         
-        # Configure session for redirects and SSL
         session = requests.Session()
-        session.verify = False  # Handle SSL issues
+        session.verify = False
         session.max_redirects = 5
         
         response = session.get(
@@ -267,12 +250,11 @@ def process_url(url: str, category: str, comment: Optional[str] = None) -> Dict[
         )
         response.raise_for_status()
         
-        # Update URL after redirects
         final_url = response.url
         logging.debug(f"Final URL after redirects: {final_url}")
         
         soup = BeautifulSoup(response.content, 'html.parser')
-        handler = get_publisher_handler(final_url)  # Use final URL for handler selection
+        handler = get_publisher_handler(final_url)
         doi, abstract = handler.extract_doi_and_abstract(soup, final_url)
         
         if doi:
@@ -306,14 +288,12 @@ class WileyHandler(PublisherHandler):
         return doi, abstract
 
     def _extract_doi(self, soup: BeautifulSoup, url: str) -> Optional[str]:
-        # Method 1: DOI access div
         doi_div = soup.select_one('.doi-access')
         if doi_div:
             match = re.search(r'10\.\d{4}/[^\s]+', doi_div.get_text())
             if match:
                 return match.group(0)
         
-        # Method 2: Meta tags
         doi_tag = soup.find('meta', {'name': 'citation_doi'})
         if doi_tag:
             return doi_tag.get('content')
@@ -342,14 +322,12 @@ class PubMedHandler(PublisherHandler):
         return doi, abstract
 
     def _extract_doi(self, soup: BeautifulSoup, url: str) -> Optional[str]:
-        # Method 1: Identifier section
         doi_elem = soup.select_one('.identifier.doi')
         if doi_elem:
             match = re.search(r'10\.\d{4}/[^\s]+', doi_elem.get_text())
             if match:
                 return match.group(0)
         
-        # Method 2: Citation section
         citation = soup.find('div', {'class': 'cite-this'})
         if citation:
             match = re.search(r'10\.\d{4}/[^\s]+', citation.get_text())
@@ -361,7 +339,6 @@ class PubMedHandler(PublisherHandler):
     def _extract_abstract(self, soup: BeautifulSoup) -> Optional[str]:
         abstract_div = soup.find('div', {'class': 'abstract'})
         if abstract_div:
-            # Remove labels like "Background:", "Methods:", etc.
             paragraphs = abstract_div.find_all(['p', 'div'], {'class': 'abstract-content'})
             if paragraphs:
                 return ' '.join(p.get_text(strip=True) for p in paragraphs)
@@ -376,12 +353,10 @@ class PlosHandler(PublisherHandler):
         return doi, abstract
 
     def _extract_doi(self, soup: BeautifulSoup, url: str) -> Optional[str]:
-        # PLOS typically has DOI in meta tags
         doi_tag = soup.find('meta', {'name': 'citation_doi'})
         if doi_tag:
             return doi_tag.get('content')
         
-        # Backup: Look in article info section
         article_info = soup.find('div', {'class': 'articleinfo'})
         if article_info:
             match = re.search(r'10\.\d{4}/[^\s]+', article_info.get_text())
@@ -393,7 +368,6 @@ class PlosHandler(PublisherHandler):
     def _extract_abstract(self, soup: BeautifulSoup) -> Optional[str]:
         abstract_section = soup.find('div', {'id': 'abstract'})
         if abstract_section:
-            # Remove section labels if present
             for label in abstract_section.find_all('strong'):
                 label.decompose()
             return abstract_section.get_text(strip=True)
@@ -408,12 +382,10 @@ class CellHandler(PublisherHandler):
         return doi, abstract
 
     def _extract_doi(self, soup: BeautifulSoup, url: str) -> Optional[str]:
-        # Method 1: Meta tags
         doi_tag = soup.find('meta', {'name': 'citation_doi'})
         if doi_tag:
             return doi_tag.get('content')
         
-        # Method 2: DOI text
         doi_div = soup.find('div', {'class': 'doi'})
         if doi_div:
             match = re.search(r'10\.\d{4}/[^\s]+', doi_div.get_text())
@@ -431,7 +403,6 @@ class CellHandler(PublisherHandler):
         
         for section in sections:
             if section:
-                # Remove any summary/highlight boxes
                 for highlights in section.find_all('div', {'class': 'highlights'}):
                     highlights.decompose()
                 return section.get_text(strip=True)
@@ -447,13 +418,11 @@ class ScienceHandler(PublisherHandler):
         return doi, abstract
 
     def _extract_doi(self, soup: BeautifulSoup, url: str) -> Optional[str]:
-        # Method 1: Meta tags
         for name in ['citation_doi', 'dc.Identifier', 'dc.identifier']:
             tag = soup.find('meta', {'name': name})
             if tag and tag.get('content'):
                 return tag.get('content')
         
-        # Method 2: DOI in article info
         article_info = soup.find('div', {'class': 'article__info'})
         if article_info:
             match = re.search(r'10\.\d{4}/[^\s]+', article_info.get_text())
@@ -471,7 +440,6 @@ class ScienceHandler(PublisherHandler):
         
         for section in abstract_sections:
             if section:
-                # Remove any article impact statement
                 impact = section.find('div', {'class': 'article-impact'})
                 if impact:
                     impact.decompose()
@@ -488,12 +456,10 @@ class OxfordHandler(PublisherHandler):
         return doi, abstract
 
     def _extract_doi(self, soup: BeautifulSoup, url: str) -> Optional[str]:
-        # Method 1: Meta tags
         doi_tag = soup.find('meta', {'name': 'citation_doi'})
         if doi_tag:
             return doi_tag.get('content')
         
-        # Method 2: Article header
         header = soup.find('header', {'class': 'article-header'})
         if header:
             match = re.search(r'10\.\d{4}/[^\s]+', header.get_text())
@@ -524,14 +490,12 @@ class JamaHandler(PublisherHandler):
         return doi, abstract
 
     def _extract_doi(self, soup: BeautifulSoup, url: str) -> Optional[str]:
-        # Method 1: Citation info
         citation = soup.find('div', {'class': 'citation-doi'})
         if citation:
             match = re.search(r'10\.\d{4}/[^\s]+', citation.get_text())
             if match:
                 return match.group(0)
         
-        # Method 2: Meta tags
         doi_tag = soup.find('meta', {'name': 'citation_doi'})
         if doi_tag:
             return doi_tag.get('content')
@@ -547,7 +511,6 @@ class JamaHandler(PublisherHandler):
         
         for section in sections:
             if section:
-                # Remove sub-headers if present
                 for header in section.find_all(['h3', 'h4']):
                     header.decompose()
                 return section.get_text(strip=True)
@@ -617,7 +580,6 @@ class PnasHandler(PublisherHandler):
         return None
 
 def extract_url_from_comment(comment):
-    """Extract URLs from comment text"""
     if not comment or pd.isna(comment):
         return None
         
@@ -636,12 +598,10 @@ def extract_url_from_comment(comment):
     return None
 
 def get_publisher_handler(url: str) -> PublisherHandler:
-    """Get appropriate handler for the given URL"""
     domain = urlparse(url).netloc.lower()
     return PublisherHandler.get_handler(domain)
 
 def process_url(url: str, category: str, comment: Optional[str] = None) -> Dict[str, Any]:
-    """Process single URL with error handling and result tracking"""
     result = {
         'url': url,
         'success': False,
@@ -654,10 +614,8 @@ def process_url(url: str, category: str, comment: Optional[str] = None) -> Dict[
         'source': 'main_url'
     }
     
-    # Add rate limiting
     time.sleep(1)
     
-    # First try comment URL if available
     if comment:
         comment_url = extract_url_from_comment(comment)
         if comment_url:
@@ -685,7 +643,6 @@ def process_url(url: str, category: str, comment: Optional[str] = None) -> Dict[
             except requests.exceptions.RequestException as e:
                 logging.warning(f"Failed to process comment URL {comment_url}: {str(e)}")
     
-    # Try main URL
     try:
         headers = {'User-Agent': USER_AGENT}
         response = requests.get(url, timeout=TIMEOUT, headers=headers)
@@ -712,7 +669,6 @@ def process_url(url: str, category: str, comment: Optional[str] = None) -> Dict[
     return result
 
 def categorize_url(row):
-    """Categorize URLs into predefined categories based on domain patterns"""
     domain = str(row.get('domain', '')).lower()
     
     for category, domains in DOMAINS.items():
@@ -722,13 +678,10 @@ def categorize_url(row):
     return 'unknown'
 
 def analyze_domains(input_file: str) -> Dict[str, Any]:
-    """Main analysis pipeline with testing mode support"""
     try:
-        # Read and prepare data
         df = pd.read_csv(input_file)
         df['category'] = df.apply(categorize_url, axis=1)
         
-        # Initialize results tracking
         results = {
             'processed': [],
             'stats': defaultdict(lambda: {
@@ -742,21 +695,17 @@ def analyze_domains(input_file: str) -> Dict[str, Any]:
             })
         }
         
-        # Process each category
         for category in ['repo', 'scientific', 'news']:
             category_df = df[df['category'] == category]
             
-            # Get top N domains
             top_domains = category_df['domain'].value_counts().head(TOP_N_DOMAINS).index
             category_urls = category_df[category_df['domain'].isin(top_domains)]
             
             logging.info(f"Processing {len(category_urls)} URLs for category: {category}")
             
-            # Apply testing interval if in testing mode
             if TESTING:
                 category_urls = category_urls.iloc[::TEST_INTERVAL]
             
-            # Process URLs with progress bar
             with tqdm(total=len(category_urls), desc=f"Processing {category}") as pbar:
                 for _, row in category_urls.iterrows():
                     if pd.isna(row.get('url', None)):
@@ -768,7 +717,6 @@ def analyze_domains(input_file: str) -> Dict[str, Any]:
                     
                     results['processed'].append(result)
                     
-                    # Update statistics
                     stats = results['stats'][category]
                     stats['total'] += 1
                     if result['success']:
