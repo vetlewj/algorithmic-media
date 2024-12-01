@@ -16,13 +16,21 @@ data = na.omit(data)
 ```
 
 ```{r}
-model_linear = lm(score ~ sens_perc, data = data)
-model_log = lm(log(score + 1) ~ sens_perc, data = data)
-model_quadratic = lm(score ~ sens_perc + I(sens_perc^2), data = data)
-model_quadratic_log = lm(log(score + 1) ~ sens_perc + I(sens_perc^2), data = data)
-stargazer(model_linear, model_quadratic, model_log, model_quadratic_log, type='text', notes = c("Quad does not add value, log is better than linear.", 'Log interpretation: coef * 100 is relative change in score for 1%-point change in sensationalism score.'), 
+model_linear = lm(score ~ sens_perc, data = data[score > 1,])
+model_log = lm(log(score) ~ sens_perc, data = data[score > 1,])
+model_quadratic = lm(score ~ sens_perc + I(sens_perc^2), data = data[score > 1,])
+model_quadratic_log = lm(log(score) ~ sens_perc + I(sens_perc^2), data = data[score > 1,])
+stargazer(model_linear, model_quadratic, model_log, model_quadratic_log, type='text', notes = c("Quad does not add value, log is better than linear.", 'Log interpretation: coef * 100 is relative change in score for 1%-point change in sensationalism score.','Filtered for score > 1.'),
 covariate.labels = c("Sensationalism score (%)", 'Sensationalism score (%) ** 2'))
 ```
+
+```{r}
+stargazer(model_log, type='latex', notes = c('Log interpretation: coef * 100 is relative change in score', 'for 1%-point change in sensationalism score.', 'Filtered for score > 1.'), 
+covariate.labels = c("Sensationalism score (%)")
+, no.space = TRUE
+)
+```
+
 
 
 ```{r}
@@ -65,6 +73,8 @@ ggplot(data_sampled,aes( x = sens_perc, y = residuals)) +
        y = "Residuals")
 
 ```
+
+
 ```{r}
 model_log_repo = lm(log(score) ~ sens_perc, data = data[data$label_voting_manual == 'repo' & score > 1 ,])
 model_log_scientific = lm(log(score) ~ sens_perc, data = data[data$label_voting_manual == 'scientific'& score > 1,])
@@ -101,5 +111,84 @@ stargazer(model_full_link_flair, type='text', notes = c(
   'Economics effect strongly deviates.',
   'Filtered for score > 1 and repo, scientific, news domains.'
 ))
+```
+
+
+
+```{r}
+# Add sensationalism intervals column
+data[, sens_interval := cut(
+                            sens_perc, 
+                            breaks = c(30, 35, 40, 45, 50, 55, 60, 65, 70),
+                            labels = c(
+                              '(30,35]', 
+                              '(35,40]', 
+                              '(40,45]', 
+                              '(45,50]', 
+                              '(50,55]', 
+                              '(55,60]', 
+                              '(60,65]', 
+                              '(65,70]'),
+                            include.lowest = FALSE
+                            )
+     ]
+
+# Fit interaction models with log(score) and score as dependent variables
+model_sens_intervals_log <-  data[score > 1 , lm(
+  log(score) ~ factor(sens_interval):sens_perc +
+    factor(year) +
+    factor(month) +
+    factor(label_voting_manual) + 
+    factor(sens_interval))]
+
+
+
+# Generate LaTeX summary table for the models
+library(stargazer)
+stargazer(model_sens_intervals_log, type = "latex", 
+          notes = c(
+            'Filtered for score > 1.', 
+            'Corrected for year, month, and domain category.'
+          ), 
+          omit = 1:31,
+          covariate.labels = c(
+            'Sensationalism x (30,35]', 
+            'Sensationalism x (35,40]', 
+            'Sensationalism x (40,45]', 
+            'Sensationalism x (45,50]', 
+            'Sensationalism x (50,55]', 
+            'Sensationalism x (55,60]', 
+            'Sensationalism x (60,65]', 
+            'Sensationalism x (65,70]'
+          ), 
+          no.space = TRUE, 
+          title = 'Log Score on Sensationalism within Proportion Intervals'
+)
+
+```
+
+
+```{r}
+# Fit a quadratic model on log score and sensationalism
+model_sens_intervals_log_quad <-  data[score > 1 , lm(
+  log(score) ~ sens_perc + 
+    #I(sens_perc^2) +
+    factor(year) +
+    factor(month) +
+    factor(label_voting_manual))]
+summary(model_sens_intervals_log_quad)
+stargazer(model_sens_intervals_log_quad, type = "text", 
+          notes = c(
+            'Filtered for score > 1.', 
+            'Corrected for year, month, and domain category.'
+          ), 
+          omit = 'factor',
+          covariate.labels = c(
+            'Sensationalism (%)', 
+            'Sensationalism (%) ** 2'
+          ), 
+          no.space = TRUE, 
+          title = 'Log Score on Sensationalism with Quadratic Term'
+)
 ```
 
