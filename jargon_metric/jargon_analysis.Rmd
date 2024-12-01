@@ -511,8 +511,11 @@ model_jargon_sens = lm(log(score) ~ jargon_percentage_times_100 +
 stargazer(model_jargon_sens,
           type = "text",
           omit = "factor", 
-          notes = c('Filtered for score > 1 and jargon proportion > 0.'),
-          covariate.labels = c('Jargon Proportion (%)')
+          no.space = TRUE,
+          notes = c('Filtered for score > 1 and jargon proportion > 0.', 
+                    'Corrected for year, month, and top category.'),
+          covariate.labels = c('Jargon Proportion (%)'), 
+          title="Log Score on Jargon Proportion"
 )
 ```
 
@@ -569,25 +572,60 @@ stargazer(model_interaction_jargon_score_label_voting_manual_all, type = "text",
 # do the above for each interval from 0-5, 5-10, 10-15, 15-20, 20-25, 25-30, 30-35, 35-40, 40-45, 45-50, 50-55, 55-60, 60-65, 65-70, 70-75, 75-80, 80-85, 85-90, 90-95, 95-100. Therefore add a new column to the data frame with the interval and interact with that.
 
 data[, jargon_interval := NA]
-data[, jargon_interval := cut(jargon_percentage_times_100, breaks = seq(5, 100, by = 15))]
+data[, jargon_interval := cut(jargon_percentage_times_100, breaks = c(0,5,15,25,35,50, 65, 80), include.lowest = FALSE)]
 data[is.na(jargon_interval), jargon_interval := '(0,5]']
 # order by jargon_prop times 100
-model_interaction_intervals = lm(
-  log(score) ~ factor(jargon_interval, levels = c('(0,5]', '(5,20]', '(20,35]', '(35,50]', '(50,65]', '(65,80]')):jargon_percentage_times_100 +
+# , levels = c('(0,5]', '(5, 15]', '(15, 25]', '(25, 35]', '(35, 50]', '(50, 65]', '(65, 80]')
+model_interaction_intervals_log = lm(
+  log(score) ~ factor(jargon_interval):jargon_percentage_times_100 +
     factor(year) +
     factor(month) +
     factor(label_voting_manual) + 
-    factor(jargon_interval, levels = c('(0,5]', '(5,20]', '(20,35]', '(35,50]', '(50,65]', '(65,80]')), data = data[score> 1 & jargon_proportion  > 0 & label_voting_manual %in% c('repo', 'scientific', 'news', 'social_media', 'scam'),]
+    factor(jargon_interval), data = data[score> 1 & (jargon_percentage_times_100  > 0) #& (label_voting_manual %in% c('repo', 'scientific', 'news', 'social_media', 'scam'))
+                                                                                                                   ,]
 )
-stargazer(model_interaction_intervals, type = "text", 
+model_interaction_intervals_linear = lm(
+  score ~ factor(jargon_interval):jargon_percentage_times_100 +
+    factor(year) +
+    factor(month) +
+    factor(label_voting_manual) + 
+    factor(jargon_interval), data = data[score> 1 & (jargon_percentage_times_100  > 0) #& (label_voting_manual %in% c('repo', 'scientific', 'news', 'social_media', 'scam'))
+                                                                                                                   ,]
+)
+
+stargazer(model_interaction_intervals_log,model_interaction_intervals_linear, type = "latex", 
           notes = c(
-            'Filtered for score > 1.','Repo, scientific, news, social media and scam domains.'
+            'Filtered for score > 1.','Repo, scientific, news, social media and scam domains.',
+            'Corrected for year, month, and domain category.'
           )
-          ,omit=1:21
-          , covariate.labels = c('(5,20]', '(20,35]', '(35,50]', '(50,65]', '(65,80]', 'Jargon x (0,5]', 'Jargon x (5,20]', 'Jargon x (20,35]', 'Jargon x (35,50]', 'Jargon x (50,65]', 'Jargon x (65,80]')
+          , omit=1:30
+          , covariate.labels = c('Jargon x (0,5]', 'Jargon x (5,15]', 'Jargon x (15,25]', 'Jargon x (25,35]', 'Jargon x (35,50]', 'Jargon x (50,65]', 'Jargon x (65,80]')
+          , no.space = TRUE
+          , title = 'Log Score on Jargon Proportion Intervals'
           )
 
 ```
+
+
+
+```{r}
+# quadratic model on jargon proportion
+model_interaction_jargon_score_quad = lm(log(score) ~ poly(jargon_percentage_times_100, 2) +
+  factor(year) +
+  factor(month) +
+  factor(label_voting_manual), data = data[score> 1 & jargon_proportion > 0,])
+stargazer(model_interaction_jargon_score_quad, type = "text", 
+          #omit = 1:17, 
+          notes = c(
+            'Filtered for score > 1 & Jargon > 0.'
+          )
+          #,covariate.labels = c('Jargon', 'Jargon^2', 'Repo', 'Scam', 'Scientific', 'Social Media', 'Jargon x News', 'Jargon x Repo', 'Jargon x Scam', 'Jargon x Scientific', 'Jargon x Social Media')
+)
+# R squared smaller than before in the model using the intervals -> quadratic model is not better and intervals more interpretable!
+
+```
+
+
 ```{r}
 model_interaction_jargon_score_top_category = lm(log(score) ~ jargon_percentage_times_100:factor(top_category) +
   factor(year) +
@@ -640,6 +678,18 @@ stargazer(model_interaction_jargon_score_top_category, model_interaction_jargon_
           )
           ,covariate.labels = c('Env. Sciences', 'Life Sciences', 'Physical Sciences', 'Social Sciences', 'Jargon x Eng. and Tech', 'Jargon x Env Sciences', 'Jargon x Life Sciences', 'Jargon x Physical Sciences', 'Jargon x Social Sciences')
           #,column.labels = c('Jargon < 20', 'Jargon [20,35)', 'Jargon [35-60)')
+          )
+```
+
+
+```{r}
+# limit log regression on the interval jargon_proportion
+model_interaction_jargon_score_interval = lm(log(score) ~ jargon_percentage_times_100 +
+  factor(year) +
+  factor(month), 
+  data = data[score> 1 & (jargon_percentage_times_100 >= 5) & (jargon_percentage_times_100 < 15) ,])
+stargazer(model_interaction_jargon_score_interval, type = "text"
+          
           )
 ```
 
