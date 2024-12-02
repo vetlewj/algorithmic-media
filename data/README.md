@@ -37,3 +37,13 @@ Contains the data for the identifiers and abstracts that we got from the semanti
 Following are including jareds data and should be considered the most up the final data for analysis
 
 **{news, scientific, repo}_{details}_DOIs_fc_scores**: These files are the respective original files with the fc scores added.
+
+
+## [eval](eval)
+Contains the data for the evaluation of the different methods and metrics.
+
+[summ_eval_model_annotations.aligned.jsonl](eval/summ_eval_model_annotations.aligned.jsonl)
+This file contains the annotations for the evaluation of the factual consistency score gathered from https://github.com/Yale-LILY/SummEval?tab=readme-ov-file#human-annotations 
+
+[summ_eval_model_annotations.aligned.with_lm_fc.csv](eval/summ_eval_model_annotations.aligned.with_lm_fc.csv) 
+The results of the factual consistency score with the language model scores added. 

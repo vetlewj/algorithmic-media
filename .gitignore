@@ -9,7 +9,8 @@ jargon_metric/data/pmi_scores/
 *.ipynb_checkpoints/
 
 **/*.csv
-*/*.jsonl
+**/*.jsonl
+**/*.log
 .Rproj.user
 /.Rhistory
 /sensationalism_metric/models/causality/
