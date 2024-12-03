@@ -1,57 +1,0 @@
-Successfully loaded CSV using latin-1 encoding
-Number of news lines: 66708
-Number of science lines: 61196
-Number of repo lines: 14622
-Total lines: 142526
-
-Domain counts by category:
---------------------------------------------------
-
-Most common news domain: www.sciencealert.com (1874 occurrences)
-
-Most common scientific domain: www.nature.com (9775 occurrences)
-
-Most common repo domain: www.ncbi.nlm.nih.gov (1397 occurrences)
-
-Saved domain filtered CSV with 13046 rows
-
-Unique domains in filtered dataset:
-{'www.ncbi.nlm.nih.gov', 'www.nature.com', 'www.sciencealert.com'}
-
-Unique categories in filtered dataset:
-{'news', 'scientific', 'repo'}
-Scraping news articles:   0%|                                                                                                  | 0/1874 [00:00<?, ?it/s]No identifier found for https://www.sciencealert.com/moon-formation-theory-synestia-planetary-science-earth
-No title found for https://www.sciencealert.com/moon-formation-theory-synestia-planetary-science-earth
-No abstract found for https://www.sciencealert.com/moon-formation-theory-synestia-planetary-science-earth
-Scraping news articles:   0%|                                                                                          | 1/1874 [00:00<06:06,  5.12it/s]No identifier found for https://www.sciencealert.com/a-drug-to-treat-peanut-allergies-is-on-it-s-way-to-being-approved-by-the-fda
-No abstract found for https://www.sciencealert.com/a-drug-to-treat-peanut-allergies-is-on-it-s-way-to-being-approved-by-the-fda
-Scraping news articles:   0%|                                                                                          | 2/1874 [00:01<34:42,  1.11s/it]No identifier found for https://www.sciencealert.com/dna-replication-first-footage-unexpected
-No title found for https://www.sciencealert.com/dna-replication-first-footage-unexpected
-No abstract found for https://www.sciencealert.com/dna-replication-first-footage-unexpected
-Scraping news articles:   0%|▏                                                                                         | 3/1874 [00:02<22:45,  1.37it/s]No title found for https://www.sciencealert.com/trapped-oxygen-bubbles-are-1-6-billion-years-old
-No abstract found for https://www.sciencealert.com/trapped-oxygen-bubbles-are-1-6-billion-years-old
-Scraping news articles:   0%|▏                                                                                         | 4/1874 [00:02<18:16,  1.70it/s]No identifier found for https://www.sciencealert.com/australia-eradication-human-papillomavirus-vaccine-scheme
-No abstract found for https://www.sciencealert.com/australia-eradication-human-papillomavirus-vaccine-scheme
-Scraping news articles:   0%|▏                                                                                         | 5/1874 [00:04<33:57,  1.09s/it]No identifier found for https://www.sciencealert.com/turns-out-having-voodoo-doll-boss-awesome-team-morale-staff-management-abusive-injustice
-No abstract found for https://www.sciencealert.com/turns-out-having-voodoo-doll-boss-awesome-team-morale-staff-management-abusive-injustice
-Scraping news articles:   0%|▎                                                                                         | 6/1874 [00:05<27:02,  1.15it/s]Scraping news articles:   0%|▎                                                                                         | 7/1874 [00:06<34:02,  1.09s/it]No identifier found for https://www.sciencealert.com/reality-doesn-t-exist-until-we-measure-it-quantum-experiment-confirms
-No abstract found for https://www.sciencealert.com/reality-doesn-t-exist-until-we-measure-it-quantum-experiment-confirms
-Scraping news articles:   0%|▍                                                                                         | 8/1874 [00:08<37:37,  1.21s/it]No identifier found for https://www.sciencealert.com/mysterious-disease-x-next-deadly-global-epidemic-who-warns-virus-pathogen
-No abstract found for https://www.sciencealert.com/mysterious-disease-x-next-deadly-global-epidemic-who-warns-virus-pathogen
-Scraping news articles:   0%|▍                                                                                         | 9/1874 [00:09<43:33,  1.40s/it]No identifier found for https://www.sciencealert.com/transposon-movement-dna-mice-pup-brain-cells-related-childhood-experience
-No title found for https://www.sciencealert.com/transposon-movement-dna-mice-pup-brain-cells-related-childhood-experience
-No abstract found for https://www.sciencealert.com/transposon-movement-dna-mice-pup-brain-cells-related-childhood-experience
-Scraping news articles:   1%|▍                                                                                        | 10/1874 [00:10<33:05,  1.07s/it]No identifier found for https://www.sciencealert.com/tabby-s-star-kic-846852-dimming-again-deepest-dip-since-kepler-record
-No title found for https://www.sciencealert.com/tabby-s-star-kic-846852-dimming-again-deepest-dip-since-kepler-record
-No abstract found for https://www.sciencealert.com/tabby-s-star-kic-846852-dimming-again-deepest-dip-since-kepler-record
-Scraping news articles:   1%|▌                                                                                        | 11/1874 [00:10<26:58,  1.15it/s]No identifier found for https://www.sciencealert.com/large-reddit-study-reveals-to-blame-for-conspiracies-theories?utm_source=feedburner&amp;utm_medium=feed&amp;utm_campaign=Feed%3A+sciencealert-latestnews+%28ScienceAlert-Latest%29
-No title found for https://www.sciencealert.com/large-reddit-study-reveals-to-blame-for-conspiracies-theories?utm_source=feedburner&amp;utm_medium=feed&amp;utm_campaign=Feed%3A+sciencealert-latestnews+%28ScienceAlert-Latest%29
-No abstract found for https://www.sciencealert.com/large-reddit-study-reveals-to-blame-for-conspiracies-theories?utm_source=feedburner&amp;utm_medium=feed&amp;utm_campaign=Feed%3A+sciencealert-latestnews+%28ScienceAlert-Latest%29
-Scraping news articles:   1%|▌                                                                                        | 12/1874 [00:10<20:45,  1.49it/s]No identifier found for http://www.sciencealert.com/physicists-have-achieved-superconductivity-in-a-non-superconductive-material?perpetual=yes&amp;limitstart=1
-No title found for http://www.sciencealert.com/physicists-have-achieved-superconductivity-in-a-non-superconductive-material?perpetual=yes&amp;limitstart=1
-No abstract found for http://www.sciencealert.com/physicists-have-achieved-superconductivity-in-a-non-superconductive-material?perpetual=yes&amp;limitstart=1
-Scraping news articles:   1%|▌                                                                                        | 13/1874 [00:11<16:56,  1.83it/s]Scraping news articles:   1%|▋                                                                                        | 14/1874 [00:13<30:21,  1.02it/s]Error scraping ScienceAlert article http://www.sciencealert.com/our-units-of-measurement-are-finally-getting-an-upgrade: Invalid URL 'scientists-are-finally-ready-to-agree-on-the-weight-of-a-kilogram': No scheme supplied. Perhaps you meant https://scientists-are-finally-ready-to-agree-on-the-weight-of-a-kilogram?
-No identifier found for http://www.sciencealert.com/our-units-of-measurement-are-finally-getting-an-upgrade
-No title found for http://www.sciencealert.com/our-units-of-measurement-are-finally-getting-an-upgrade
-No abstract found for http://www.sciencealert.com/our-units-of-measurement-are-finally-getting-an-upgrade
-Scraping news articles:   1%|▋                                                                                        | 15/1874 [00:13<23:16,  1.33it/s]Scraping news articles:   1%|▊                                                                                        | 16/1874 [00:14<30:48,  1.01it/s]
