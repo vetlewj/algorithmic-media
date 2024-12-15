@@ -1,4 +1,4 @@
-Download hole folder from  [drive](https://drive.google.com/drive/folders/1DOLzsk7WaV5vXFL-X9-1QeVK0U9BDR_8?usp=drive_link)
+Download whole folder from  [drive](https://drive.google.com/drive/folders/1DOLzsk7WaV5vXFL-X9-1QeVK0U9BDR_8?usp=drive_link)
 # [Data](https://drive.google.com/drive/folders/1DOLzsk7WaV5vXFL-X9-1QeVK0U9BDR_8?usp=drive_link)
 [combined_for_analysis_sensationalism_jargon_categories_domain_labels.csv](combined_for_analysis_sensationalism_jargon_categories_domain_labels.csv)
 
