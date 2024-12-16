@@ -1,6 +1,6 @@
 # Evaluating the Quality of Science Communication on r/science
+[CS294 Final_Report.pdf](docs/CS294%20Final_Report.pdf)
 
-[Final Report](docs/CS294 Final_Report.pdf)
 ### RQ1: How does the quality of science communication differ by the type of source used? (e.g., news article, research paper)
 ![CS294 Final Presentation - Copy of Midterm Presentation (4).png](docs/Screenshots%20for%20ReadMe/CS294%20Final%20Presentation%20-%20Copy%20of%20Midterm%20Presentation%20%284%29.png)
 ![CS294 Final Presentation - Copy of Midterm Presentation (5).png](docs/Screenshots%20for%20ReadMe/CS294%20Final%20Presentation%20-%20Copy%20of%20Midterm%20Presentation%20%285%29.png)
