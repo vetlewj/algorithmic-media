@@ -25,7 +25,7 @@ covariate.labels = c("Sensationalism score (%)", 'Sensationalism score (%) ** 2'
 ```
 
 ```{r}
-stargazer(model_log, type='latex', notes = c('Log interpretation: coef * 100 is relative change in score', 'for 1%-point change in sensationalism score.', 'Filtered for score > 1.'), 
+stargazer(model_log, type='text', notes = c('Log interpretation: coef * 100 is relative change in score', 'for 1%-point change in sensationalism score.', 'Filtered for score > 1.'), 
 covariate.labels = c("Sensationalism score (%)")
 , no.space = TRUE
 )
@@ -51,12 +51,13 @@ ggplot(data_sampled, aes(x = sens_perc, y = residuals)) +
 ```{r}
 # finding out if the effect is because of the once that did not perform at all with the score of 0
 data_no_zero = data[data$score > 0,]
+model_log = lm(log(score + 1) ~ sens_perc, data = data)
 model_log_no_zero = lm(log(score) ~ sens_perc, data = data_no_zero)
 model_log_g_one = lm(log(score) ~ sens_perc, data = data_no_zero[data_no_zero$score > 1,])
 model_log_g_three = lm(log(score) ~ sens_perc, data = data_no_zero[data_no_zero$score > 3,])
-stargazer(model_log, model_log_no_zero, model_log_g_one, model_log_g_three, type='text', column.labels=c('All', 'Score > 0', 'Score > 1', 'Score > 3'), notes = 
+stargazer(model_log, model_log_no_zero, model_log_g_one, model_log_g_three, type='latex', column.labels=c('All', 'Score > 0', 'Score > 1', 'Score > 3'), notes = 
 "Excluding the posts that did not perform at all -> Effect is similar, but explanatory power higher. Using score > 1 filter for the rest of the analysis.", 
-covariate.labels = c("Sensationalism score (%)"))
+covariate.labels = c("Sensationalism score (%)"), no.space = TRUE, font.size = 'small')
 ```
 ```{r}
 residuals = residuals(model_log_g_one)
@@ -81,7 +82,7 @@ model_log_scientific = lm(log(score) ~ sens_perc, data = data[data$label_voting_
 model_log_news = lm(log(score) ~ sens_perc, data = data[data$label_voting_manual == 'news'& score > 1,])
 # on of the above
 model_log_combined = lm(log(score) ~ sens_perc, data = data[data$label_voting_manual %in% c('repo', 'scientific', 'news')& score > 1,])
-stargazer(model_log_repo, model_log_scientific, model_log_news, model_log_combined, type='text', column.labels=c('Repo', 'Scientific', 'News', 'Combined') , notes = c("Base levels of sensationalism differ between the domains.", 'Filtered for score > 1 and repo, scientific, news domains.'))
+stargazer(model_log_repo, model_log_scientific, model_log_news, model_log_combined, type='latex', column.labels=c('Repo', 'Scientific', 'News', 'Combined') , notes = c("Base levels of sensationalism differ between the domains.", 'Filtered for score > 1 and repo, scientific, news domains.'))
 ```
 
 ```{r}
@@ -162,7 +163,8 @@ stargazer(model_sens_intervals_log, type = "latex",
             'Sensationalism x (65,70]'
           ), 
           no.space = TRUE, 
-          title = 'Log Score on Sensationalism within Proportion Intervals'
+          title = 'Log Score on Sensationalism within Proportion Intervals',
+          font.size = 'small'
 )
 
 ```
@@ -192,3 +194,27 @@ stargazer(model_sens_intervals_log_quad, type = "text",
 )
 ```
 
+
+```{r}
+stargazer(model_log, model_sens_intervals_log, type = "text", 
+          notes = c(
+            'Filtered for score > 1.', 
+            'Corrected for year, month, and domain category.'
+          ), 
+          # omit everything that has not sens_perc in it
+          #omit = 3:33,
+          covariate.labels = c('Sensationalism (%)',
+            'Sensationalism x (30,35]', 
+            'Sensationalism x (35,40]', 
+            'Sensationalism x (40,45]', 
+            'Sensationalism x (45,50]', 
+            'Sensationalism x (50,55]', 
+            'Sensationalism x (55,60]', 
+            'Sensationalism x (60,65]', 
+            'Sensationalism x (65,70]'
+          ), 
+          no.space = TRUE, 
+          title = 'Log Score on Sensationalism within Proportion Intervals'
+)
+
+```
